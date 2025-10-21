@@ -3,6 +3,7 @@ from typing import List, Dict, Any, Tuple
 from openai import OpenAI
 from dotenv import load_dotenv
 from utils.json_parser import JSONParser
+from config import get_openai_config
 
 # Load environment variables
 load_dotenv()
@@ -12,15 +13,12 @@ class OpenAIService:
     
     def __init__(self):
         self.client = None
+        self.config = get_openai_config()
         self._initialize_client()
     
     def _initialize_client(self):
         """Initialize OpenAI client with API key"""
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            raise ValueError("OPENAI_API_KEY environment variable is not set")
-        
-        self.client = OpenAI(api_key=api_key)
+        self.client = OpenAI(api_key=self.config.api_key)
     
     def _check_client(self):
         """Check if client is properly initialized"""
@@ -62,7 +60,7 @@ Please respond with a JSON array containing exactly {number_of_sessions} session
 }}"""
 
         response = self.client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=self.config.model_name,
             messages=[
                 {
                     "role": "system",
@@ -170,7 +168,7 @@ Please respond with valid JSON only in the following structure:
 }}"""
 
         response = self.client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=self.config.model_name,
             messages=[
                 {
                     "role": "system",
@@ -257,7 +255,7 @@ Please respond with a JSON object containing an array of question objects with t
 }}"""
 
         response = self.client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=self.config.model_name,
             messages=[
                 {
                     "role": "system",

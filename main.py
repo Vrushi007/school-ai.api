@@ -21,10 +21,16 @@ app.add_exception_handler(Exception, general_exception_handler)
 def start_server():
     """Start the FastAPI server"""
     import uvicorn
+    import os
+    
+    # Use PORT environment variable if available (for hosting platforms like Render)
+    # Otherwise default to 8000 for local development
+    port = int(os.getenv("PORT", 8000))
+    
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=8000,
+        port=port,
         reload=False,  # Disabled reload to avoid multiprocessing issues on macOS with Python 3.13
         log_level="info"
     )

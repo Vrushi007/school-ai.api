@@ -87,8 +87,9 @@ Then visit: http://localhost:8000/docs
    ```bash
    # Option 1: Copy the example file and edit it
    cp .env.example .env
-   # Then edit .env file in any text editor and replace the placeholder:
+   # Then edit .env file in any text editor and replace the placeholders:
    OPENAI_API_KEY=sk-your-actual-openai-api-key-here
+   OPENAI_MODEL=gpt-4o-mini  # Optional - defaults to gpt-4o-mini
 
    # Option 2: Create .env file directly (macOS/Linux)
    echo "OPENAI_API_KEY=sk-your-actual-openai-api-key-here" > .env
@@ -220,6 +221,7 @@ dummy-school-ai.api/
 ## Environment Variables
 
 - `OPENAI_API_KEY`: Your OpenAI API key (required)
+- `OPENAI_MODEL`: OpenAI model to use (optional, defaults to `gpt-4o-mini`)
 
 ## Dependencies
 
