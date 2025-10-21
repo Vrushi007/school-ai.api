@@ -19,7 +19,8 @@ A Python web API application that integrates with OpenAI to generate educational
 git clone <repository-url> && cd dummy-school-ai.api
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements-minimal.txt
-echo "OPENAI_API_KEY=your-api-key-here" > .env
+cp .env.example .env
+# Edit .env file to add your actual OpenAI API key
 python main.py
 ```
 
@@ -84,13 +85,16 @@ Then visit: http://localhost:8000/docs
 4. **Configure OpenAI API key**
 
    ```bash
-   # Option 1: Edit the .env file directly
-   # Open .env file in any text editor and replace the placeholder:
+   # Option 1: Copy the example file and edit it
+   cp .env.example .env
+   # Then edit .env file in any text editor and replace the placeholder:
    OPENAI_API_KEY=sk-your-actual-openai-api-key-here
 
-   # Option 2: Use echo command (macOS/Linux):
+   # Option 2: Create .env file directly (macOS/Linux)
    echo "OPENAI_API_KEY=sk-your-actual-openai-api-key-here" > .env
    ```
+
+   > **Important**: Never commit your `.env` file to git as it contains your secret API key!
 
 5. **Run the application**
 
@@ -204,7 +208,8 @@ dummy-school-ai.api/
 │   └── json_parser.py  # JSON parsing utilities
 ├── requirements.txt     # Complete Python dependencies
 ├── requirements-minimal.txt # Minimal dependencies for basic setup
-├── .env                 # Environment variables (API keys)
+├── .env.example         # Environment variables template
+├── .env                 # Environment variables (create from .env.example)
 ├── .gitignore          # Git ignore file
 ├── test_api.py         # API testing script
 ├── test_json_parser.py # JSON parser testing script
@@ -298,6 +303,27 @@ python test_api.py
 # Test JSON parser specifically
 python test_json_parser.py
 ```
+
+## Git Repository Setup
+
+If you want to create your own git repository:
+
+```bash
+# Initialize git repository
+git init
+
+# Add all source files (the .gitignore will exclude sensitive files)
+git add .
+
+# Make initial commit
+git commit -m "Initial commit: School AI API with OpenAI integration"
+
+# Add remote repository (if you have one)
+git remote add origin <your-repository-url>
+git push -u origin main
+```
+
+> **Security Note**: The `.env` file is automatically excluded from git to protect your API keys. Users should copy `.env.example` to `.env` and add their own API keys.
 
 ## Error Handling
 
