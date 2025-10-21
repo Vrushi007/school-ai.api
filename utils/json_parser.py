@@ -43,3 +43,16 @@ class JSONParser:
             return True, session_content_data, None
         except json.JSONDecodeError as e:
             return False, raw_content, str(e)
+    
+    @staticmethod
+    def parse_questions(raw_content):
+        """
+        Parse questions from OpenAI response
+        Returns: (success: bool, data: dict/str, error: str/None)
+        """
+        try:
+            json_content = JSONParser.extract_json_from_response(raw_content)
+            questions_data = json.loads(json_content)
+            return True, questions_data, None
+        except json.JSONDecodeError as e:
+            return False, raw_content, str(e)

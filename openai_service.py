@@ -1,18 +1,40 @@
-from openai import OpenAI
 import os
+from typing import List, Dict, Any, Tuple
+from openai import OpenAI
 from dotenv import load_dotenv
+from utils.json_parser import JSONParser
 
+# Load environment variables
 load_dotenv()
 
 class OpenAIService:
-    def __init__(self):
-        self.api_key = os.getenv("OPENAI_API_KEY")
-        self.client = OpenAI(api_key=self.api_key)
+    """Service class for handling OpenAI API interactions"""
     
-    def generate_lesson_plan(self, subject_name, class_name, chapter_title, number_of_sessions, default_session_duration):
+    def __init__(self):
+        self.client = None
+        self._initialize_client()
+    
+    def _initialize_client(self):
+        """Initialize OpenAI client with API key"""
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY environment variable is not set")
+        
+        self.client = OpenAI(api_key=api_key)
+    
+    def _check_client(self):
+        """Check if client is properly initialized"""
+        if not self.client:
+            raise RuntimeError("OpenAI client is not initialized")
+    
+    def generate_lesson_plan(self, subject_name: str, class_name: str, chapter_title: str, 
+                           number_of_sessions: int, default_session_duration: str) -> Tuple[bool, Dict[str, Any], str]:
         """
         Generate a lesson plan using OpenAI API
+        Returns: (success: bool, data: dict, error: str/None)
         """
+        self._check_client()
+        
         user_message = f"""Create a detailed session plan for a teacher teaching {subject_name} to {class_name} standard students.
 
 Chapter: {chapter_title}
@@ -53,12 +75,17 @@ Please respond with a JSON array containing exactly {number_of_sessions} session
             ]
         )
         
-        return response.choices[0].message.content
+        raw_content = response.choices[0].message.content
+        return JSONParser.parse_lesson_plan(raw_content)
     
-    def generate_detailed_session_content(self, session_data, subject_name, class_name):
+    def generate_detailed_session_content(self, session_data: Dict[str, Any], 
+                                        subject_name: str, class_name: str) -> Tuple[bool, Dict[str, Any], str]:
         """
         Generate detailed content for a specific session using OpenAI API
+        Returns: (success: bool, data: dict, error: str/None)
         """
+        self._check_client()
+        
         user_message = f"""Create detailed lesson content for the following session:
 
 Session Title: {session_data.get('title')}
@@ -156,4 +183,92 @@ Please respond with valid JSON only in the following structure:
             ]
         )
         
-        return response.choices[0].message.content
+        raw_content = response.choices[0].message.content
+        return JSONParser.parse_detailed_session_content(raw_content)
+    
+    def generate_questions(self, class_name: str, subject_name: str, 
+                         chapters: List[str], question_requirements: str) -> Tuple[bool, Dict[str, Any], str]:
+        """
+        Generate questions using OpenAI API
+        Returns: (success: bool, data: dict, error: str/None)
+        """
+        self._check_client()
+        
+        chapters_text = ", ".join(chapters)
+        
+        user_message = f"""Create a comprehensive set of questions for {class_name} standard {subject_name} students.
+
+Chapters to cover: {chapters_text}
+
+Question Requirements: {question_requirements}
+
+Please generate a diverse set of questions that:
+- Cover all specified chapters proportionally
+- Are age-appropriate for {class_name} standard students
+- Follow CBSE/NCERT curriculum standards
+- Include various difficulty levels (easy, medium, hard)
+- Cover different question types (MCQ, short answer, long answer, application-based)
+- Test conceptual understanding, not just memorization
+
+For each question, provide:
+1. Question text
+2. Question type (MCQ, Short Answer, Long Answer, Application)
+3. Difficulty level (Easy, Medium, Hard)
+4. Chapter reference
+5. Marks/Points
+6. Expected answer/solution (for non-MCQ)
+7. Options (for MCQ only)
+8. Correct answer (for MCQ only)
+
+Please respond with a JSON object containing an array of question objects with the following structure:
+{{
+  "questions": [
+    {{
+      "id": number,
+      "questionText": "string",
+      "questionType": "MCQ|Short Answer|Long Answer|Application",
+      "difficultyLevel": "Easy|Medium|Hard",
+      "chapterReference": "string",
+      "marks": number,
+      "options": ["option1", "option2", "option3", "option4"], // only for MCQ
+      "correctAnswer": "string", // for MCQ: option letter/number, for others: detailed answer
+      "explanation": "string" // brief explanation of the answer
+    }}
+  ],
+  "metadata": {{
+    "totalQuestions": number,
+    "questionTypeBreakdown": {{
+      "MCQ": number,
+      "Short Answer": number,
+      "Long Answer": number,
+      "Application": number
+    }},
+    "difficultyBreakdown": {{
+      "Easy": number,
+      "Medium": number,
+      "Hard": number
+    }},
+    "chapterBreakdown": {{
+      "chapter1": number,
+      "chapter2": number
+    }},
+    "totalMarks": number
+  }}
+}}"""
+
+        response = self.client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are an expert educator and question paper creator specializing in Indian school standards (CBSE syllabus) with NCERT books. Create high-quality, curriculum-aligned questions that test various cognitive levels according to Bloom's taxonomy. Always respond with valid JSON only."
+                },
+                {
+                    "role": "user",
+                    "content": user_message
+                }
+            ]
+        )
+        
+        raw_content = response.choices[0].message.content
+        return JSONParser.parse_questions(raw_content)
