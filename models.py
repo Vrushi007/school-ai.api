@@ -40,3 +40,25 @@ class APIResponse(BaseModel):
 class HealthResponse(BaseModel):
     status: str
     message: str
+
+
+# Student Chatbot Models
+class ConversationMessage(BaseModel):
+    role: str = Field(..., description="Role: 'user' or 'assistant'")
+    content: str = Field(..., description="Message content")
+
+
+class StudentQuestionRequest(BaseModel):
+    question: str = Field(..., description="Student's question")
+    subject_name: Optional[str] = Field(None, description="Subject context (optional)")
+    class_name: Optional[str] = Field(None, description="Class/Grade context (optional)")
+    conversation_history: Optional[List[ConversationMessage]] = Field(
+        default=[], 
+        description="Previous conversation history for context"
+    )
+
+
+class StudentAnswerResponse(BaseModel):
+    answer: str = Field(..., description="AI's detailed answer")
+    conversation_id: Optional[str] = Field(None, description="Conversation identifier for tracking")
+    updated_history: List[ConversationMessage] = Field(..., description="Updated conversation history")

@@ -270,3 +270,61 @@ Please respond with a JSON object containing an array of question objects with t
         
         raw_content = response.choices[0].message.content
         return JSONParser.parse_questions(raw_content)
+    
+    def get_student_answer(self, question: str, conversation_history: List[Dict[str, str]] = None, 
+                          subject_name: str = None, class_name: str = None) -> Tuple[bool, str, str]:
+        """
+        Get a detailed answer to a student's question with conversation context
+        Returns: (success: bool, answer: str, error: str/None)
+        """
+        self._check_client()
+        
+        # Build the conversation context
+        messages = [
+            {
+                "role": "system",
+                "content": f"""You are an expert tutor for Indian school students (CBSE/NCERT curriculum). 
+Your role is to provide detailed, educational answers to student questions.
+
+Guidelines:
+- Provide clear, detailed explanations with step-by-step reasoning
+- Include practical examples and real-world applications
+- Use age-appropriate language for the student's level
+- Break down complex concepts into simpler parts
+- Encourage learning and curiosity
+- If the question is outside academic scope, politely redirect to educational topics
+
+{f"Subject context: {subject_name}" if subject_name else ""}
+{f"Class/Grade: {class_name}" if class_name else ""}
+
+Always be encouraging, patient, and thorough in your explanations."""
+            }
+        ]
+        
+        # Add conversation history if provided
+        if conversation_history:
+            for message in conversation_history:
+                messages.append({
+                    "role": message.get("role", "user"),
+                    "content": message.get("content", "")
+                })
+        
+        # Add the current question
+        messages.append({
+            "role": "user",
+            "content": question
+        })
+        
+        try:
+            response = self.client.chat.completions.create(
+                model=self.config.model_name,
+                messages=messages,
+                max_tokens=1500,  # Allow for detailed responses
+                temperature=0.7   # Balanced creativity and accuracy
+            )
+            
+            answer = response.choices[0].message.content
+            return True, answer, None
+            
+        except Exception as e:
+            return False, "", str(e)
