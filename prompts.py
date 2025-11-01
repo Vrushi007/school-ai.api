@@ -3,6 +3,8 @@ Prompt templates for OpenAI API interactions
 """
 
 from typing import List, Dict, Any
+from pathlib import Path
+import json
 
 
 class PromptTemplates:
@@ -63,6 +65,18 @@ Please respond with a JSON array containing exactly {number_of_sessions} session
     
     @staticmethod
     def get_session_content_prompt(session_data: Dict[str, Any], subject_name: str, class_name: str) -> str:
+        # Read session_detail_output_format.json located next to this module and convert to a JSON string
+        _session_file = Path(__file__).parent / "session_detail_output_format.json"
+        try:
+          _raw = _session_file.read_text(encoding="utf-8")
+          try:
+            # normalize/pretty-print if it's valid JSON
+            session_detail_output = json.dumps(json.loads(_raw), ensure_ascii=False, indent=2)
+          except json.JSONDecodeError:
+            # if not valid JSON, keep raw text
+            session_detail_output = _raw
+        except FileNotFoundError:
+          session_detail_output = "{}"
         """Generate detailed session content prompt"""
         objectives_text = chr(10).join([f"- {obj}" for obj in session_data.get('objectives', [])])
         
@@ -79,75 +93,17 @@ Learning Objectives:
 
 Please provide a comprehensive lesson plan with the following sections:
 
-1. **Introduction** (5-10 minutes)
-   - Hook/attention grabber
-   - Brief overview of what will be covered
-   - Connection to previous learning
-
-2. **Main Content** (detailed breakdown)
-   - Key concepts explanation
-   - Step-by-step teaching sequence
-   - Important formulas/definitions
-   - Real-world examples and applications
-
-3. **Activities & Practice**
-   - Interactive activities for student engagement
-   - Practice problems with solutions
-   - Group work suggestions
-   - Hands-on experiments (if applicable)
-
-4. **Assessment & Evaluation**
-   - Quick assessment questions
-   - Exit ticket suggestions
-   - Homework assignments
-
-5. **Resources & Materials**
-   - Required materials/equipment
-   - Reference materials
-   - Additional reading suggestions
-
-6. **Differentiation Strategies**
-   - Support for struggling learners
-   - Extensions for advanced students
-   - Multiple learning styles accommodation
-
+1. Teaching Script/Content (as if a teacher is explaining in class). 
+2. Board Work Plan (definitions, laws, diagrams to draw, keywords). 
+3. Detailed Explanations of Subtopics (expand concepts with examples, tables, and [Diagram Placeholder] tags). 
+4. Real-life Applications / Analogies / Storytelling Elements to make the topic engaging. 
+5. Wrap-up Summary (key takeaways). Engagement Questions (3-4 thought-provoking questions). 
+6. Quick Assessment (5 Q&A with expected answers). 
+Formatting requirements: Structure content clearly for classroom teaching. Use simple, engaging, teacher-friendly language. 
+Add [Diagram Placeholder] tags where diagrams are to be drawn. 
+Add comparison tables where useful.
 Please respond with valid JSON only in the following structure:
-{{
-  "sessionTitle": "string",
-  "duration": "string",
-  "introduction": {{
-    "hook": "string",
-    "overview": "string",
-    "previousConnection": "string"
-  }},
-  "mainContent": {{
-    "keyConcepts": ["concept1", "concept2", "concept3"],
-    "teachingSequence": ["step1", "step2", "step3"],
-    "formulas": ["formula1", "formula2"],
-    "examples": ["example1", "example2"]
-  }},
-  "activities": {{
-    "interactive": ["activity1", "activity2"],
-    "practiceProblems": ["problem1", "problem2"],
-    "groupWork": "string",
-    "experiments": ["experiment1", "experiment2"]
-  }},
-  "assessment": {{
-    "quickQuestions": ["question1", "question2", "question3"],
-    "exitTicket": "string",
-    "homework": "string"
-  }},
-  "resources": {{
-    "materials": ["material1", "material2"],
-    "references": ["ref1", "ref2"],
-    "additionalReading": ["reading1", "reading2"]
-  }},
-  "differentiation": {{
-    "strugglingLearners": "string",
-    "advancedStudents": "string",
-    "multipleStyles": "string"
-  }}
-}}"""
+{session_detail_output}"""
     
     @staticmethod
     def get_questions_prompt(class_name: str, subject_name: str, chapters: List[str], 
