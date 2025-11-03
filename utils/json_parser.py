@@ -32,19 +32,6 @@ class JSONParser:
             return False, raw_content, str(e)
     
     @staticmethod
-    def parse_detailed_session_content(raw_content):
-        """
-        Parse detailed session content from OpenAI response
-        Returns: (success: bool, data: dict/str, error: str/None)
-        """
-        try:
-            json_content = JSONParser.extract_json_from_response(raw_content)
-            session_content_data = json.loads(json_content)
-            return True, session_content_data, None
-        except json.JSONDecodeError as e:
-            return False, raw_content, str(e)
-    
-    @staticmethod
     def parse_questions(raw_content):
         """
         Parse questions from OpenAI response

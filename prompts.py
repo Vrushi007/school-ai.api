@@ -65,18 +65,6 @@ Please respond with a JSON array containing exactly {number_of_sessions} session
     
     @staticmethod
     def get_session_content_prompt(session_data: Dict[str, Any], subject_name: str, class_name: str) -> str:
-        # Read session_detail_output_format.json located next to this module and convert to a JSON string
-        _session_file = Path(__file__).parent / "session_detail_output_format.json"
-        try:
-          _raw = _session_file.read_text(encoding="utf-8")
-          try:
-            # normalize/pretty-print if it's valid JSON
-            session_detail_output = json.dumps(json.loads(_raw), ensure_ascii=False, indent=2)
-          except json.JSONDecodeError:
-            # if not valid JSON, keep raw text
-            session_detail_output = _raw
-        except FileNotFoundError:
-          session_detail_output = "{}"
         """Generate detailed session content prompt"""
         objectives_text = chr(10).join([f"- {obj}" for obj in session_data.get('objectives', [])])
         
@@ -91,19 +79,186 @@ Summary: {session_data.get('summary')}
 Learning Objectives:
 {objectives_text}
 
-Please provide a comprehensive lesson plan with the following sections:
+Please provide a comprehensive lesson plan following this EXACT JSON structure:
 
-1. Teaching Script/Content (as if a teacher is explaining in class). 
-2. Board Work Plan (definitions, laws, diagrams to draw, keywords). 
-3. Detailed Explanations of Subtopics (expand concepts with examples, tables, and [Diagram Placeholder] tags). 
-4. Real-life Applications / Analogies / Storytelling Elements to make the topic engaging. 
-5. Wrap-up Summary (key takeaways). Engagement Questions (3-4 thought-provoking questions). 
-6. Quick Assessment (5 Q&A with expected answers). 
-Formatting requirements: Structure content clearly for classroom teaching. Use simple, engaging, teacher-friendly language. 
-Add [Diagram Placeholder] tags where diagrams are to be drawn. 
-Add comparison tables where useful.
-Please respond with valid JSON only in the following structure:
-{session_detail_output}"""
+{{
+    "sessionTitle": "{session_data.get('title')}",
+    "subject": "{subject_name}",
+    "class": "{class_name}",
+    "duration": "{session_data.get('duration')}",
+    "summary": "{session_data.get('summary')}",
+    "objectives": {session_data.get('objectives', [])},
+    "teachingScript": {{
+        "overview": "A short paragraph that the teacher can read to introduce the lesson (2-4 sentences).",
+        "stepByStep": [
+            {{
+                "time": "e.g. 0-5 mins",
+                "teacherLines": "What the teacher says (dialogue-style) — simple, classroom friendly language.",
+                "studentActivity": "What students should do/respond during this step."
+            }}
+        ],
+        "transitions": "Short phrases to move between segments (e.g. 'Now that we have seen X, let's try Y')."
+    }},
+    "boardWorkPlan": {{
+        "definitions": [
+            "Term — concise definition (one line)."
+        ],
+        "lawsOrRules": [
+            {{
+                "name": "Law name",
+                "statement": "One-line statement of the law",
+                "notation": "Any formula or symbol (if applicable)"
+            }}
+        ],
+        "diagramsToDraw": [
+            {{
+                "label": "Diagram name",
+                "instructions": "Step-by-step for drawing on board",
+                "placeholderTag": "[Diagram Placeholder: Diagram name]"
+            }}
+        ],
+        "keywords": [
+            "keyword1", "keyword2", "keyword3"
+        ]
+    }},
+    "detailedExplanations": {{
+        "subtopics": [
+            {{
+                "title": "Subtopic title",
+                "explanation": "Teacher friendly expanded explanation of the subtopic with examples.",
+                "example": "Short worked example or scenario.",
+                "diagram": "[Diagram Placeholder: short descriptor]",
+                "comparisonTable": {{
+                    "useIfRelevant": true,
+                    "headers": ["Feature", "Item A", "Item B"],
+                    "rows": [["Property 1", "A value/description", "B value/description"]]
+                }},
+                "classroomTips": "Reminders for teacher (misconceptions, demonstration notes)."
+            }}
+        ],
+        "formulasAndDerivations": [
+            {{
+                "formula": "e.g. c = λν",
+                "meaning": "Explain symbols and units",
+                "derivationOrUse": "Brief derivation or how to use the formula in class problems"
+            }}
+        ]
+    }},
+    "activities": {{
+        "warmUpHook": "One-sentence activity to grab attention (e.g. quick thought experiment).",
+        "interactive": [
+            {{
+                "name": "Activity name",
+                "type": "class discussion / demo / video / interactive experiment",
+                "steps": ["Step 1", "Step 2"],
+                "time": "minutes",
+                "materials": ["material1", "material2"],
+                "expectedOutcome": "What students will observe or learn from the activity"
+            }}
+        ],
+        "practiceProblems": [
+            {{
+                "problem": "Short problem statement",
+                "difficulty": "easy / medium / hard",
+                "answer": "expected short answer or calculation outline"
+            }}
+        ],
+        "groupWork": {{
+            "task": "One-sentence group task (e.g. make a poster, build a model)",
+            "roles": ["researcher", "recorder", "presenter"],
+            "successCriteria": "What a good group output looks like"
+        }},
+        "experiments": [
+            {{
+                "title": "Experiment name",
+                "objective": "What it demonstrates",
+                "materials": ["list materials"],
+                "procedure": ["Step 1", "Step 2"],
+                "safetyNotes": "Any safety precautions",
+                "observationPoints": "What students should record/notice"
+            }}
+        ]
+    }},
+    "wrapUp": {{
+        "summary": "3-5 concise bullet sentences that restate the lesson's key takeaways.",
+        "engagementQuestions": [
+            "Open-ended question 1 to provoke thinking",
+            "Open-ended question 2",
+            "Application question 3",
+            "Reflective question 4 (optional)"
+        ],
+        "closureActivity": "One-line activity to finish class (e.g. quick exit ticket prompt)."
+    }},
+    "quickAssessment": {{
+        "fiveQandA": [
+            {{
+                "q": "Question 1 (clear, classroom-level)",
+                "a": "Expected short answer"
+            }},
+            {{
+                "q": "Question 2",
+                "a": "Expected short answer"
+            }},
+            {{
+                "q": "Question 3",
+                "a": "Expected short answer"
+            }},
+            {{
+                "q": "Question 4",
+                "a": "Expected short answer"
+            }},
+            {{
+                "q": "Question 5",
+                "a": "Expected short answer"
+            }}
+        ],
+        "formatHints": "Specify whether Qs are MCQ / short answer / calculation and marks for each (e.g. 1 mark each)."
+    }},
+    "assessment": {{
+        "exitTicket": "One-sentence prompt for students to complete before leaving (e.g. 'Write one new thing you learned and one question you still have').",
+        "homework": "Short homework assignment aligned with objectives (what to research or practice).",
+        "rubricOrMarkingHints": "Short descriptors for quick marking (e.g. full / partial / no credit criteria)."
+    }},
+    "resources": {{
+        "materials": [
+            "material1 (e.g. prism)",
+            "material2 (e.g. torch/flashlight)",
+            "whiteboard, markers"
+        ],
+        "references": [
+            "Main textbook reference (chapter and page)",
+            "Lab manual or teacher guide"
+        ],
+        "additionalReadingOrMedia": [
+            "Short article or video title with brief note on use (no external links)"
+        ]
+    }},
+    "differentiation": {{
+        "strugglingLearners": "Concrete scaffolds, sentence starters, simplified diagrams, pairing with peers.",
+        "advancedStudents": "Extension tasks, deeper problem solving or mini-research prompts.",
+        "multipleLearningStyles": "How to present (visual / kinesthetic / auditory) — e.g. diagrams, hands-on demo, spoken summary."
+    }},
+    "formattingGuidelinesForOutput": {{
+        "languageTone": "Simple, teacher-friendly, conversational (avoid overly technical jargon).",
+        "diagramPlaceholders": "Include [Diagram Placeholder: short descriptor] exactly where teacher should draw or project diagrams.",
+        "tables": "Use small comparison tables (max 4-5 rows) for quick board writing.",
+        "lengthHints": {{
+            "teachingScript": "Approx 200-350 words",
+            "eachSubtopic": "Approx 80-150 words",
+            "assessmentQ": "Short and precise — one line per Q"
+        }},
+        "jsonValidationNotes": "All text fields must be strings; lists must be arrays. Replace placeholder strings with actual content when generating session output."
+    }}
+}}
+
+IMPORTANT INSTRUCTIONS:
+1. Replace ALL placeholder text with actual, relevant content for the session
+2. Ensure all arrays have at least one real item (no empty arrays)
+3. Make sure all text is appropriate for {class_name} standard students
+4. Include subject-specific terminology and examples relevant to {subject_name}
+5. Respond with ONLY valid JSON - no additional text or explanations
+6. All content should be practical and implementable in a real classroom
+7. Use simple, teacher-friendly language throughout"""
     
     @staticmethod
     def get_questions_prompt(class_name: str, subject_name: str, chapters: List[str], 

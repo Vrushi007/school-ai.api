@@ -71,6 +71,8 @@ async def generate_session_content(request: DetailedSessionRequest):
     This endpoint creates comprehensive lesson content including introduction,
     main content, activities, assessment, resources, and differentiation strategies.
     This provides the detailed content for a specific session from the lesson plan.
+    
+    Returns the raw JSON response from OpenAI for the UI to parse and handle.
     """
     try:
         logger.info(f"Generating session content for: {request.session_data.title}")
@@ -78,25 +80,27 @@ async def generate_session_content(request: DetailedSessionRequest):
         # Convert session_data to dict for the service
         session_data_dict = request.session_data.dict()
         
-        # Call OpenAI service
-        success, parsed_result, error = openai_service.generate_detailed_session_content(
+        # Call OpenAI service to get raw response
+        raw_response = openai_service.generate_detailed_session_content_raw(
             session_data=session_data_dict,
             subject_name=request.subject_name,
             class_name=request.class_name
         )
         
-        if not success:
-            logger.error(f"Failed to parse session content response: {error}")
-            return APIResponse(
-                success=False,
-                message="Failed to parse AI response",
-                error=f"JSON parsing error: {error}",
-                data={"raw_response": parsed_result}  # Include raw response for debugging
-            )
+        logger.info(f"Generated raw session content for: {request.session_data.title}")
         
         return APIResponse(
             success=True,
-            data={"session_content": parsed_result},
+            data={
+                "raw_content": raw_response,
+                "metadata": {
+                    "session_title": request.session_data.title,
+                    "subject": request.subject_name,
+                    "class": request.class_name,
+                    "duration": request.session_data.duration,
+                    "objectives_count": len(request.session_data.objectives) if request.session_data.objectives else 0
+                }
+            },
             message="Session content generated successfully"
         )
         

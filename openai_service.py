@@ -59,11 +59,11 @@ class OpenAIService:
         raw_content = response.choices[0].message.content
         return JSONParser.parse_lesson_plan(raw_content)
     
-    def generate_detailed_session_content(self, session_data: Dict[str, Any], 
-                                        subject_name: str, class_name: str) -> Tuple[bool, Dict[str, Any], str]:
+    def generate_detailed_session_content_raw(self, session_data: Dict[str, Any], 
+                                            subject_name: str, class_name: str) -> str:
         """
         Generate detailed content for a specific session using OpenAI API
-        Returns: (success: bool, data: dict, error: str/None)
+        Returns: Raw JSON string response for UI to handle parsing
         """
         self._check_client()
         
@@ -87,8 +87,8 @@ class OpenAIService:
             ]
         )
         
-        raw_content = response.choices[0].message.content
-        return JSONParser.parse_detailed_session_content(raw_content)
+        # Return raw content directly for UI to parse
+        return response.choices[0].message.content
     
     def generate_questions(self, class_name: str, subject_name: str, 
                          chapters: List[str], question_requirements: str) -> Tuple[bool, Dict[str, Any], str]:
