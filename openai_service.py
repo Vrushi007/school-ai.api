@@ -59,12 +59,15 @@ class OpenAIService:
         raw_content = response.choices[0].message.content
         return JSONParser.parse_lesson_plan(raw_content)
     
-    def generate_detailed_session_content_raw(self, session_data: Dict[str, Any], 
+    def generate_detailed_session_content(self, session_data: Dict[str, Any], 
                                             subject_name: str, class_name: str) -> str:
         """
         Generate detailed content for a specific session using OpenAI API
-        Returns: Raw JSON string response for UI to handle parsing
+        Returns: Clean, validated JSON string for UI to parse
         """
+        import json
+        import re
+        
         self._check_client()
         
         user_message = PromptTemplates.get_session_content_prompt(
@@ -72,7 +75,6 @@ class OpenAIService:
             subject_name=subject_name,
             class_name=class_name
         )
-
         response = self.client.chat.completions.create(
             model=self.config.model_name,
             messages=[
@@ -87,8 +89,29 @@ class OpenAIService:
             ]
         )
         
-        # Return raw content directly for UI to parse
-        return response.choices[0].message.content
+        raw_content = response.choices[0].message.content
+        
+        # Clean and validate JSON before sending to UI
+        try:
+            # Extract JSON from markdown code blocks if present
+            json_match = re.search(r'```(?:json)?\s*(.*?)\s*```', raw_content, re.DOTALL)
+            if json_match:
+                json_content = json_match.group(1).strip()
+            else:
+                json_content = raw_content.strip()
+            
+            # Fix common JSON issues
+            # Remove trailing commas before closing braces and brackets
+            cleaned_json = re.sub(r',\s*}', '}', json_content)
+            cleaned_json = re.sub(r',\s*]', ']', cleaned_json)
+            
+            # Validate by parsing and re-serializing
+            parsed_data = json.loads(cleaned_json)
+            return parsed_data
+            
+        except json.JSONDecodeError as e:
+            # If parsing fails, return the raw content and let UI handle the error
+            return raw_content
     
     def generate_questions(self, class_name: str, subject_name: str, 
                          chapters: List[str], question_requirements: str) -> Tuple[bool, Dict[str, Any], str]:
