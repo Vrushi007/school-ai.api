@@ -59,7 +59,7 @@ class OpenAIService:
         raw_content = response.choices[0].message.content
         return JSONParser.parse_lesson_plan(raw_content)
     
-    def generate_detailed_session_content_raw(self, session_data: Dict[str, Any], 
+    def generate_detailed_session_content(self, session_data: Dict[str, Any], 
                                             subject_name: str, class_name: str) -> str:
         """
         Generate detailed content for a specific session using OpenAI API

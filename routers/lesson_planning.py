@@ -81,18 +81,17 @@ async def generate_session_content(request: DetailedSessionRequest):
         session_data_dict = request.session_data.dict()
         
         # Call OpenAI service to get raw response
-        raw_response = openai_service.generate_detailed_session_content_raw(
+        response = openai_service.generate_detailed_session_content(
             session_data=session_data_dict,
             subject_name=request.subject_name,
             class_name=request.class_name
         )
         
-        logger.info(f"Generated raw session content for: {request.session_data.title}")
-        
+        logger.info(f"Generated session content for: {request.session_data.title}")
         return APIResponse(
             success=True,
             data={
-                "raw_content": raw_response,
+                "content": response,
                 "metadata": {
                     "session_title": request.session_data.title,
                     "subject": request.subject_name,
