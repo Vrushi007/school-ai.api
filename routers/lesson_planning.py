@@ -1,6 +1,7 @@
 import logging
 from fastapi import APIRouter, HTTPException, status
 
+from helpers.youtube import YouTubeHelper
 from models import LessonPlanRequest, DetailedSessionRequest, APIResponse
 from openai_service import OpenAIService
 
@@ -10,6 +11,7 @@ router = APIRouter(prefix="/api", tags=["lesson-planning"])
 
 # Initialize OpenAI service
 openai_service = OpenAIService()
+youtube_service = YouTubeHelper()
 
 
 @router.post("/generate-lesson-plan", response_model=APIResponse)
@@ -86,6 +88,11 @@ async def generate_session_content(request: DetailedSessionRequest):
             subject_name=request.subject_name,
             class_name=request.class_name
         )
+
+        keywords = response["resources"]["youtubeSearchKeywords"]
+        youtube_results = youtube_service.search_videos_by_keywords(keywords)
+
+        response["resources"]["youtubeVideos"] = youtube_results
         
         logger.info(f"Generated session content for: {request.session_data.title}")
         return APIResponse(
