@@ -231,6 +231,10 @@ Please provide a comprehensive lesson plan following this EXACT JSON structure:
         ],
         "additionalReadingOrMedia": [
             "Short article or video title with brief note on use (no external links)"
+        ],
+        "youtubeSearchKeywords": [
+            "Search term 1 related to the lesson (e.g. 'Structure of Human Eye Class 10 Science')",
+            "Search term 2 (e.g. 'Vision Defects Myopia Hypermetropia explained')"
         ]
     }},
     "differentiation": {{
