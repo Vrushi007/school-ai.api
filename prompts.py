@@ -76,7 +76,7 @@ Output JSON keys (fill with relevant content, no placeholders):
   "teachingScript": {{ "overview": "", "stepByStep": [], "transitions": "" }},
   "boardWorkPlan": {{ "definitions": [], "lawsOrRules": [], "diagramsToDraw": [], "keywords": [] }},
   "detailedExplanations": {{ "subtopics": [], "formulasAndDerivations": [] }},
-  "activities": {{ "warmUpHook": "", "interactive": [], "practiceProblems": [], "groupWork": {{}}, "experiments": [] }},
+  "activities": {{ "warmUpHook": "", "interactive": [{{"name": "", "time":"", "expectedOutcome": "", "steps": []}}], "practiceProblems": [{{"problem": "", "answer": ""}}], "groupWork": {{"task": "", "successCriteria": ""}}, "experiments": [] }},
   "wrapUp": {{ "summary": [], "engagementQuestions": [], "closureActivity": "" }},
   "quickAssessment": {{ "fiveQandA": [], "formatHints": "" }},
   "assessment": {{ "exitTicket": "", "homework": "", "rubricOrMarkingHints": "" }},
