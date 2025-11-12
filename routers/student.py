@@ -35,7 +35,7 @@ async def get_student_answer(request: StudentQuestionRequest):
                 })
         
         # Get answer from OpenAI service
-        success, answer, error = openai_service.get_student_answer(
+        success, answer, error = await openai_service.get_student_answer(
             question=request.question,
             conversation_history=history_dict,
             subject_name=request.subject_name,

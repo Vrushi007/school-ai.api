@@ -27,7 +27,7 @@ async def generate_lesson_plan(request: LessonPlanRequest):
         logger.info(f"Generating lesson plan for {request.subject_name} - {request.chapter_title}")
         
         # Call OpenAI service
-        success, parsed_result, error = openai_service.generate_lesson_plan(
+        success, parsed_result, error = await openai_service.generate_lesson_plan(
             subject_name=request.subject_name,
             class_name=request.class_name,
             chapter_title=request.chapter_title,
@@ -82,8 +82,8 @@ async def generate_session_content(request: DetailedSessionRequest):
         # Convert session_data to dict for the service
         session_data_dict = request.session_data.dict()
         
-        # Call OpenAI service to get raw response
-        response = openai_service.generate_detailed_session_content(
+        # Call OpenAI service to get response
+        response = await openai_service.generate_detailed_session_content(
             session_data=session_data_dict,
             subject_name=request.subject_name,
             class_name=request.class_name
