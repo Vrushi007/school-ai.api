@@ -89,31 +89,39 @@ class OpenAIService:
                     "role": "user",
                     "content": user_message
                 }
-            ]
+            ],
+            temperature=0.2,
+            response_format={"type": "json_object"}
         )
         
         raw_content = response.choices[0].message.content
         
         # Clean and validate JSON before sending to UI
         try:
-            # Extract JSON from markdown code blocks if present
-            json_match = re.search(r'```(?:json)?\s*(.*?)\s*```', raw_content, re.DOTALL)
+            # Since we're using response_format="json_object", response should be pure JSON
+            # But still handle markdown code blocks as fallback
+            json_content = raw_content.strip()
+            
+            # Check if content is wrapped in markdown code blocks
+            json_match = re.search(r'```(?:json)?\s*(.*?)\s*```', json_content, re.DOTALL)
             if json_match:
                 json_content = json_match.group(1).strip()
-            else:
-                json_content = raw_content.strip()
             
-            # Fix common JSON issues
-            # Remove trailing commas before closing braces and brackets
-            cleaned_json = re.sub(r',\s*}', '}', json_content)
-            cleaned_json = re.sub(r',\s*]', ']', cleaned_json)
-            
-            # Validate by parsing and re-serializing
-            parsed_data = json.loads(cleaned_json)
-            return parsed_data
+            # Try to parse as-is first (for pure JSON responses)
+            try:
+                parsed_data = json.loads(json_content)
+                return parsed_data
+            except json.JSONDecodeError:
+                # If that fails, try cleaning up common JSON issues
+                cleaned_json = re.sub(r',\s*}', '}', json_content)
+                cleaned_json = re.sub(r',\s*]', ']', cleaned_json)
+                parsed_data = json.loads(cleaned_json)
+                return parsed_data
             
         except json.JSONDecodeError as e:
-            # If parsing fails, return the raw content and let UI handle the error
+            # If all parsing attempts fail, return the raw content and let UI handle the error
+            print(f"JSON parsing failed: {e}")
+            print(f"Raw content: {raw_content[:200]}...")
             return raw_content
     
     async def generate_questions(self, class_name: str, subject_name: str, 
