@@ -1,6 +1,6 @@
 import os
 from typing import List, Dict, Any, Tuple
-from openai import OpenAI
+from openai import AsyncOpenAI
 from dotenv import load_dotenv
 from utils.json_parser import JSONParser
 from config import get_openai_config
@@ -19,14 +19,14 @@ class OpenAIService:
     
     def _initialize_client(self):
         """Initialize OpenAI client with API key"""
-        self.client = OpenAI(api_key=self.config.api_key)
+        self.client = AsyncOpenAI(api_key=self.config.api_key)
     
     def _check_client(self):
         """Check if client is properly initialized"""
         if not self.client:
             raise RuntimeError("OpenAI client is not initialized")
     
-    def generate_lesson_plan(self, subject_name: str, class_name: str, chapter_title: str, 
+    async def generate_lesson_plan(self, subject_name: str, class_name: str, chapter_title: str, 
                            number_of_sessions: int, default_session_duration: str) -> Tuple[bool, Dict[str, Any], str]:
         """
         Generate a lesson plan using OpenAI API
@@ -42,7 +42,7 @@ class OpenAIService:
             default_session_duration=default_session_duration
         )
 
-        response = self.client.chat.completions.create(
+        response = await self.client.chat.completions.create(
             model=self.config.model_name,
             messages=[
                 {
@@ -53,13 +53,14 @@ class OpenAIService:
                     "role": "user",
                     "content": user_message
                 }
-            ]
+            ],
+            temperature=0.5
         )
         
         raw_content = response.choices[0].message.content
         return JSONParser.parse_lesson_plan(raw_content)
     
-    def generate_detailed_session_content(self, session_data: Dict[str, Any], 
+    async def generate_detailed_session_content(self, session_data: Dict[str, Any], 
                                             subject_name: str, class_name: str) -> str:
         """
         Generate detailed content for a specific session using OpenAI API
@@ -75,7 +76,7 @@ class OpenAIService:
             subject_name=subject_name,
             class_name=class_name
         )
-        response = self.client.chat.completions.create(
+        response = await self.client.chat.completions.create(
             model=self.config.model_name,
             messages=[
                 {
@@ -113,7 +114,7 @@ class OpenAIService:
             # If parsing fails, return the raw content and let UI handle the error
             return raw_content
     
-    def generate_questions(self, class_name: str, subject_name: str, 
+    async def generate_questions(self, class_name: str, subject_name: str, 
                          chapters: List[str], question_requirements: str) -> Tuple[bool, Dict[str, Any], str]:
         """
         Generate questions using OpenAI API
@@ -128,7 +129,7 @@ class OpenAIService:
             question_requirements=question_requirements
         )
 
-        response = self.client.chat.completions.create(
+        response = await self.client.chat.completions.create(
             model=self.config.model_name,
             messages=[
                 {
@@ -145,7 +146,7 @@ class OpenAIService:
         raw_content = response.choices[0].message.content
         return JSONParser.parse_questions(raw_content)
     
-    def get_student_answer(self, question: str, conversation_history: List[Dict[str, str]] = None, 
+    async def get_student_answer(self, question: str, conversation_history: List[Dict[str, str]] = None, 
                           subject_name: str = None, class_name: str = None) -> Tuple[bool, str, str]:
         """
         Get a detailed answer to a student's question with conversation context
@@ -181,7 +182,7 @@ class OpenAIService:
         })
         
         try:
-            response = self.client.chat.completions.create(
+            response = await self.client.chat.completions.create(
                 model=self.config.model_name,
                 messages=messages,
                 max_tokens=1500,  # Allow for detailed responses

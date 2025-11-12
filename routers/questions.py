@@ -24,7 +24,7 @@ async def generate_questions(request: QuestionGenerationRequest):
         logger.info(f"Generating questions for {request.subject_name} - Class {request.class_name}")
         
         # Call OpenAI service
-        success, parsed_result, error = openai_service.generate_questions(
+        success, parsed_result, error = await openai_service.generate_questions(
             class_name=request.class_name,
             subject_name=request.subject_name,
             chapters=request.chapters,

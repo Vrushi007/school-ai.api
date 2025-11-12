@@ -11,7 +11,7 @@ class PromptTemplates:
     """Class containing all prompt templates for the School AI API"""
     
     # System messages for different functionalities
-    LESSON_PLAN_SYSTEM = """You are an expert educational content creator specializing in curriculum design for Indian school standards (CBSE syllabus) with NCERT books. Always respond with valid JSON only."""
+    LESSON_PLAN_SYSTEM = """Expert CBSE/NCERT educator. Output exactly 5 JSON session objects in an array. No text, only JSON."""
     
     SESSION_CONTENT_SYSTEM = """You are an expert educational content creator specializing in detailed lesson planning for Indian school standards (CBSE syllabus) with NCERT books. Create comprehensive, engaging lesson content that is age-appropriate and follows pedagogical best practices. Always respond with valid JSON only."""
     
