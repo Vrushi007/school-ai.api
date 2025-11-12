@@ -54,7 +54,9 @@ class OpenAIService:
                     "content": user_message
                 }
             ],
-            temperature=0.5
+            temperature=0.2,
+            presence_penalty=0,
+            frequency_penalty=0
         )
         
         raw_content = response.choices[0].message.content

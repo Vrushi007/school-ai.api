@@ -37,31 +37,16 @@ Always be encouraging, patient, and thorough in your explanations."""
     def get_lesson_plan_prompt(subject_name: str, class_name: str, chapter_title: str, 
                               number_of_sessions: int, default_session_duration: str) -> str:
         """Generate lesson plan prompt"""
-        return f"""Create a detailed session plan for a teacher teaching {subject_name} to {class_name} standard students.
+        return f"""Generate {number_of_sessions} sequential sessions for {subject_name} Class {class_name}, Chapter: "{chapter_title}"
 
-Chapter: {chapter_title}
-Number of Sessions: {number_of_sessions}
+Each session includes: 
+- title (clear),
+- summary (1-2 sentences),
+- duration ("{default_session_duration}"),
+- 3-4 objectives.
 
-For each session, provide:
-1. A clear, engaging session title
-2. A comprehensive summary (2-3 sentences) of what will be covered
-3. Estimated duration (typically {default_session_duration} per session)
-4. 3-4 specific learning objectives
-
-The sessions should:
-- Build progressively from basic to advanced concepts
-- Be age-appropriate for {class_name} standard students
-- Include practical examples and applications
-- Cover the complete chapter content across all {number_of_sessions} sessions
-
-Please respond with a JSON array containing exactly {number_of_sessions} session objects, each with the following structure:
-{{
-  "sessionNumber": number,
-  "title": "string",
-  "summary": "string", 
-  "duration": "string",
-  "objectives": ["objective1", "objective2", "objective3", "objective4"]
-}}"""
+Format:
+[{{"sessionNumber": 1, "title": "", "summary": "", "duration": "{default_session_duration}", "objectives": []}}]"""
     
     @staticmethod
     def get_session_content_prompt(session_data: Dict[str, Any], subject_name: str, class_name: str) -> str:
