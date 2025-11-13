@@ -27,7 +27,7 @@ class QuestionGenerationRequest(BaseModel):
     class_name: str = Field(..., description="Class/Grade (e.g., 5th, 10th)")
     subject_name: str = Field(..., description="Subject name")
     chapters: List[str] = Field(..., description="List of chapters to cover")
-    question_requirements: str = Field(..., description="Specific requirements for questions")
+    total_marks: int = Field(..., description="Total marks for the questions")
 
 
 class APIResponse(BaseModel):
