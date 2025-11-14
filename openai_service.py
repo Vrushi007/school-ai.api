@@ -125,7 +125,7 @@ class OpenAIService:
             return raw_content
     
     async def generate_questions(self, class_name: str, subject_name: str, 
-                         chapters: List[str], question_requirements: str) -> Tuple[bool, Dict[str, Any], str]:
+                         chapters: List[str], total_marks: int) -> Tuple[bool, Dict[str, Any], str]:
         """
         Generate questions using OpenAI API
         Returns: (success: bool, data: dict, error: str/None)
@@ -136,11 +136,13 @@ class OpenAIService:
             class_name=class_name,
             subject_name=subject_name,
             chapters=chapters,
-            question_requirements=question_requirements
+            total_marks=total_marks
         )
 
         response = await self.client.chat.completions.create(
             model=self.config.model_name,
+            temperature=0.3,
+            response_format={"type": "json_object"},
             messages=[
                 {
                     "role": "system",

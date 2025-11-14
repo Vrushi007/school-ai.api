@@ -28,7 +28,7 @@ async def generate_questions(request: QuestionGenerationRequest):
             class_name=request.class_name,
             subject_name=request.subject_name,
             chapters=request.chapters,
-            question_requirements=request.question_requirements
+            total_marks=request.total_marks
         )
         
         if not success:

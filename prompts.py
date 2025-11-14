@@ -85,69 +85,93 @@ Output JSON keys (fill with relevant content, no placeholders):
 }}"""
     
     @staticmethod
-    def get_questions_prompt(class_name: str, subject_name: str, chapters: List[str], 
-                           question_requirements: str) -> str:
+    def get_questions_prompt(class_name: str, subject_name: str, chapters: List[str], total_marks: int) -> str:
         """Generate questions creation prompt"""
         chapters_text = ", ".join(chapters)
         
-        return f"""Create a comprehensive set of questions for {class_name} standard {subject_name} students.
+        return f"""Create a {total_marks}-mark CBSE Class {class_name} {subject_name} question paper for the chapters: {chapters_text}.
+        Follow the same section structure as official CBSE board exams:
 
-Chapters to cover: {chapters_text}
+Section A - Multiple Choice Questions (1 mark each)
+Section B - Very Short Answer Questions (2 marks each)
+Section C - Short Answer Questions (3 marks each)
+Section D - Long Answer Questions (5 marks each)
+Section E - Case-Based Questions (4 marks each, may include sub-parts)
 
-Question Requirements: {question_requirements}
+All questions must be conceptually accurate and strictly from NCERT syllabus.
+Maintain Easy (40%), Medium (40%), Hard (20%) difficulty ratio.
+Include theory, reasoning, diagrams, and application-based questions.
 
-Please generate a diverse set of questions that:
-- Cover all specified chapters proportionally
-- Are age-appropriate for {class_name} standard students
-- Follow CBSE/NCERT curriculum standards
-- Include various difficulty levels (easy, medium, hard)
-- Cover different question types (MCQ, short answer, long answer, application-based)
-- Test conceptual understanding, not just memorization
-
-For each question, provide:
-1. Question text
-2. Question type (MCQ, Short Answer, Long Answer, Application)
-3. Difficulty level (Easy, Medium, Hard)
-4. Chapter reference
-5. Marks/Points
-6. Expected answer/solution (for non-MCQ)
-7. Options (for MCQ only)
-8. Correct answer (for MCQ only)
+Output only valid JSON in this structure:
 
 Please respond with a JSON object containing an array of question objects with the following structure:
 {{
-  "questions": [
+  "class": "10th",
+  "subject": "Science",
+  "chapter": "How do Organisms Reproduce",
+  "totalMarks": 40,
+  "sections": [
     {{
-      "id": number,
-      "questionText": "string",
-      "questionType": "MCQ|Short Answer|Long Answer|Application",
-      "difficultyLevel": "Easy|Medium|Hard",
-      "chapterReference": "string",
-      "marks": number,
-      "options": ["option1", "option2", "option3", "option4"], // only for MCQ
-      "correctAnswer": "string", // for MCQ: option letter/number, for others: detailed answer
-      "explanation": "string" // brief explanation of the answer
+      "sectionName": "A",
+      "description": "Multiple Choice Questions (1 mark each)",
+      "totalMarks": 10,
+      "questions": [
+        {{ "qNo": 1, "questionText": "", "marks": 1, "difficulty": "", "type": "MCQ", "options": ["", "", "", ""], "correctAnswer": "" }}
+      ]
+    }},
+    {{
+      "sectionName": "B",
+      "description": "Very Short Answer Questions (2 marks each)",
+      "totalMarks": 12,
+      "questions": [
+        {{ "qNo": 1, "questionText": "", "marks": 2, "difficulty": "", "type": "VSA", "answerHints": "" }}
+      ]
+    }},
+    {{
+      "sectionName": "C",
+      "description": "Short Answer Questions (3 marks each)",
+      "totalMarks": 9,
+      "questions": [
+        {{ "qNo": 1, "questionText": "", "marks": 3, "difficulty": "", "type": "SA", "answerHints": "" }}
+      ]
+    }},
+    {{
+      "sectionName": "D",
+      "description": "Long Answer Questions (5 marks each)",
+      "totalMarks": 5,
+      "questions": [
+        {{ "qNo": 1, "questionText": "", "marks": 5, "difficulty": "", "type": "LA", "answerHints": "" }}
+      ]
+    }},
+    {{
+      "sectionName": "E",
+      "description": "Case-Based / Source-Based Questions (4 marks each)",
+      "totalMarks": 4,
+      "questions": [
+        {{ 
+          "qNo": 1, 
+          "caseText": "",
+          "type": "CASE",
+          "subQuestions": [
+            {{ "subQNo": "a", "questionText": "", "marks": 1, "answerHints": "" }},
+            {{ "subQNo": "b", "questionText": "", "marks": 1, "answerHints": "" }},
+            {{ "subQNo": "c", "questionText": "", "marks": 2, "answerHints": "" }}
+          ]
+        }}
+      ]
     }}
   ],
-  "metadata": {{
-    "totalQuestions": number,
-    "questionTypeBreakdown": {{
-      "MCQ": number,
-      "Short Answer": number,
-      "Long Answer": number,
-      "Application": number
-    }},
-    "difficultyBreakdown": {{
-      "Easy": number,
-      "Medium": number,
-      "Hard": number
-    }},
-    "chapterBreakdown": {{
-      "chapter1": number,
-      "chapter2": number
-    }},
-    "totalMarks": number
-  }}
+  "blueprint": {{
+    "marksDistribution": {{ "MCQ": 10, "VSA": 12, "SA": 9, "LA": 5, "CASE": 4 }},
+    "difficultySplit": {{ "Easy": 40, "Medium": 40, "Hard": 20 }},
+    "skillsCovered": ["Knowledge", "Understanding", "Application", "Analysis"]
+  }},
+  "instructions": [
+    "All questions are compulsory.",
+    "Answer the questions in sequence.",
+    "Use diagrams wherever necessary.",
+    "No overall choice, but internal choices may be given."
+  ]
 }}"""
     
     @staticmethod
