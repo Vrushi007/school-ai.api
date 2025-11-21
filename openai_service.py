@@ -113,9 +113,6 @@ class OpenAIService:
         Generate detailed content for a specific session using OpenAI API
         Returns: Clean, validated JSON string for UI to parse
         """
-        import json
-        import re
-        
         self._check_client()
         
         user_message = PromptTemplates.get_session_content_prompt(
@@ -148,39 +145,23 @@ class OpenAIService:
             
             duration = time.time() - start_time
             raw_content = OpenAIHelper.extract_output_text(response)
+            response_metadata = {
+                "sessionTitle": session_data.get('title'),
+                "subject": subject_name,
+                "class": class_name,
+                "duration": session_data.get('duration'),
+                "summary": session_data.get('summary'),
+                "objectives": session_data.get('objectives', []),
+            }
             
-            # Clean and validate JSON before sending to UI
-            json_parse_success = True
-            error_message = None
+            # Clean and validate JSON before sending to UI using robust parser
+            json_parse_success, result, error_message = JSONParser.extract_json_from_response(
+                raw_content, result_metadata=response_metadata, parse=True, fallback_to_raw=True
+            )
             
-            try:
-                # Since we're using response_format="json_object", response should be pure JSON
-                # But still handle markdown code blocks as fallback
-                json_content = raw_content.strip()
-                
-                # Check if content is wrapped in markdown code blocks
-                json_match = re.search(r'```(?:json)?\s*(.*?)\s*```', json_content, re.DOTALL)
-                if json_match:
-                    json_content = json_match.group(1).strip()
-                
-                # Try to parse as-is first (for pure JSON responses)
-                try:
-                    parsed_data = json.loads(json_content)
-                    result = parsed_data
-                except json.JSONDecodeError:
-                    # If that fails, try cleaning up common JSON issues
-                    cleaned_json = re.sub(r',\s*}', '}', json_content)
-                    cleaned_json = re.sub(r',\s*]', ']', cleaned_json)
-                    parsed_data = json.loads(cleaned_json)
-                    result = parsed_data
-                
-            except json.JSONDecodeError as e:
-                # If all parsing attempts fail, return the raw content and let UI handle the error
-                json_parse_success = False
-                error_message = f"JSON parsing failed: {e}"
+            if not json_parse_success:
                 print(error_message)
                 print(f"Raw content: {raw_content[:200]}...")
-                result = raw_content
             
             # Log the API call with detailed metrics
             openai_timing_logger.log_api_call(
@@ -257,9 +238,14 @@ class OpenAIService:
             
             duration = time.time() - start_time
             raw_content = OpenAIHelper.extract_output_text(response)
-            
+            request_metadata = {
+                "class": class_name,
+                "subject": subject_name,
+                "chapters": ", ".join(chapters),
+                "totalMarks": total_marks,
+            }
             # Parse the result
-            success, data, error = JSONParser.parse_questions(raw_content)
+            success, data, error = JSONParser.parse_questions(raw_content, request_metadata)
             
             # Log successful API call with detailed metrics
             openai_timing_logger.log_api_call(
