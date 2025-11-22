@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, status
 
 from helpers.youtube import YouTubeHelper
 from models import LessonPlanRequest, DetailedSessionRequest, APIResponse
-from openai_service import OpenAIService
+from services.openai_service import OpenAIService
 
 logger = logging.getLogger(__name__)
 

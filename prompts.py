@@ -11,7 +11,7 @@ class PromptTemplates:
     """Class containing all prompt templates for the School AI API"""
     
     # System messages for different functionalities
-    LESSON_PLAN_SYSTEM = """Expert CBSE/NCERT educator. Output exactly 5 JSON session objects in an array. No text, only JSON."""
+    LESSON_PLAN_SYSTEM = """Expert CBSE/NCERT educator. Respond only in JSON."""
     
     SESSION_CONTENT_SYSTEM = """Expert CBSE/NCERT lesson planner. Always output one JSON object exactly following the provided field names. No explanations, no text outside JSON. Keep age-appropriate, teacher-friendly tone."""
     
@@ -67,12 +67,6 @@ Learning Objectives:
 Output JSON keys (fill with relevant content, no placeholders):
 
 {{
-  "sessionTitle": "",
-  "subject": "",
-  "class": "",
-  "duration": "",
-  "summary": "",
-  "objectives": [],
   "teachingScript": {{ "overview": "", "stepByStep": [{{ "time": "", "teacherLines": "", "studentActivity": "" }}], "transitions": "" }},
   "boardWorkPlan": {{ "definitions": [], "lawsOrRules": [{{ "name": "", "statement": "", "notation": "" }}], "diagramsToDraw": [{{ "label": "", "instructions": "", "placeholderTag": "" }}], "keywords": [] }},
   "detailedExplanations": {{ "subtopics": [{{ "title": "", "explanation": "", "example": "", "diagram": "", "comparisonTable": {{ "useIfRelevant": false, "headers": [], "rows": [] }}, "classroomTips": "" }}], "formulasAndDerivations": [] }},
@@ -106,15 +100,10 @@ Output only valid JSON in this structure:
 
 Please respond with a JSON object containing an array of question objects with the following structure:
 {{
-  "class": "10th",
-  "subject": "Science",
-  "chapter": "How do Organisms Reproduce",
-  "totalMarks": 40,
   "sections": [
     {{
       "sectionName": "A",
       "description": "Multiple Choice Questions (1 mark each)",
-      "totalMarks": 10,
       "questions": [
         {{ "qNo": 1, "questionText": "", "marks": 1, "difficulty": "", "type": "MCQ", "options": ["", "", "", ""], "correctAnswer": "" }}
       ]
@@ -122,7 +111,6 @@ Please respond with a JSON object containing an array of question objects with t
     {{
       "sectionName": "B",
       "description": "Very Short Answer Questions (2 marks each)",
-      "totalMarks": 12,
       "questions": [
         {{ "qNo": 1, "questionText": "", "marks": 2, "difficulty": "", "type": "VSA", "answerHints": "" }}
       ]
@@ -130,7 +118,6 @@ Please respond with a JSON object containing an array of question objects with t
     {{
       "sectionName": "C",
       "description": "Short Answer Questions (3 marks each)",
-      "totalMarks": 9,
       "questions": [
         {{ "qNo": 1, "questionText": "", "marks": 3, "difficulty": "", "type": "SA", "answerHints": "" }}
       ]
@@ -138,7 +125,6 @@ Please respond with a JSON object containing an array of question objects with t
     {{
       "sectionName": "D",
       "description": "Long Answer Questions (5 marks each)",
-      "totalMarks": 5,
       "questions": [
         {{ "qNo": 1, "questionText": "", "marks": 5, "difficulty": "", "type": "LA", "answerHints": "" }}
       ]
@@ -146,7 +132,6 @@ Please respond with a JSON object containing an array of question objects with t
     {{
       "sectionName": "E",
       "description": "Case-Based / Source-Based Questions (4 marks each)",
-      "totalMarks": 4,
       "questions": [
         {{ 
           "qNo": 1, 
@@ -162,9 +147,9 @@ Please respond with a JSON object containing an array of question objects with t
     }}
   ],
   "blueprint": {{
-    "marksDistribution": {{ "MCQ": 10, "VSA": 12, "SA": 9, "LA": 5, "CASE": 4 }},
-    "difficultySplit": {{ "Easy": 40, "Medium": 40, "Hard": 20 }},
-    "skillsCovered": ["Knowledge", "Understanding", "Application", "Analysis"]
+    "marksDistribution": {{ "MCQ"|"VSA"|"SA"|"LA"|"CASE"  }},
+    "difficultySplit": {{ "Easy"|"Medium"|"Hard" }},
+    "skillsCovered": []
   }},
   "instructions": [
     "All questions are compulsory.",
