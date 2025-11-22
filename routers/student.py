@@ -3,7 +3,7 @@ import uuid
 from fastapi import APIRouter, HTTPException, status
 
 from models import StudentQuestionRequest, StudentAnswerResponse, ConversationMessage, APIResponse
-from openai_service import OpenAIService
+from services.openai_service import OpenAIService
 
 logger = logging.getLogger(__name__)
 
