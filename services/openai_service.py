@@ -147,11 +147,14 @@ class OpenAIService:
     async def generate_questions(self, class_name: str, subject_name: str,
                                   chapters: List[str], total_marks: int) -> Tuple[bool, Dict[str, Any], str]:
         self._check_client()
+        bp = OpenAIHelper.allocate_marks_and_generate_blueprint(total_marks)
+
         user_message = PromptTemplates.get_questions_prompt(
             class_name=class_name,
             subject_name=subject_name,
             chapters=chapters,
-            total_marks=total_marks
+            total_marks=total_marks,
+            allocation=bp["questions_per_section"]
         )
         total_prompt_length = len(PromptTemplates.QUESTIONS_SYSTEM) + len(user_message)
         start_time = time.time()
@@ -170,7 +173,9 @@ class OpenAIService:
                 "subject": subject_name,
                 "chapters": ", ".join(chapters),
                 "totalMarks": total_marks,
+                "blueprint": bp["blueprint"]
             }
+            
             success, data, error = JSONParser.parse_questions(raw_content, request_metadata)
             openai_timing_logger.log_api_call(
                 function_name="generate_questions",
