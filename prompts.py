@@ -3,8 +3,7 @@ Prompt templates for OpenAI API interactions
 """
 
 from typing import List, Dict, Any
-from pathlib import Path
-import json
+
 
 
 class PromptTemplates:
@@ -15,7 +14,10 @@ class PromptTemplates:
     
     SESSION_CONTENT_SYSTEM = """Expert CBSE/NCERT lesson planner. Always output one JSON object exactly following the provided field names. No explanations, no text outside JSON. Keep age-appropriate, teacher-friendly tone."""
     
-    QUESTIONS_SYSTEM = """You are an expert educator and question paper creator specializing in Indian school standards (CBSE syllabus) with NCERT books. Create high-quality, curriculum-aligned questions that test various cognitive levels according to Bloom's taxonomy. Always respond with valid JSON only."""
+    QUESTIONS_SYSTEM = """You create CBSE/NCERT-aligned question papers. 
+Always output ONLY valid JSON that matches the user-given structure and counts. 
+Never add or remove questions. 
+Never modify marks per question."""
     
     STUDENT_TUTOR_SYSTEM = """You are an expert tutor for Indian school students (CBSE/NCERT curriculum). 
 Your role is to provide detailed, educational answers to student questions.
@@ -79,59 +81,69 @@ Output JSON keys (fill with relevant content, no placeholders):
 }}"""
     
     @staticmethod
-    def get_questions_prompt(class_name: str, subject_name: str, chapters: List[str], total_marks: int) -> str:
+    def get_questions_prompt(class_name: str, subject_name: str, chapters: List[str], total_marks: int, allocation: Dict[str, Any]) -> str:
         """Generate questions creation prompt"""
         chapters_text = ", ".join(chapters)
         
-        return f"""Create a {total_marks}-mark CBSE Class {class_name} {subject_name} question paper for the chapters: {chapters_text}.
-        Follow the same section structure as official CBSE board exams:
+        countA = allocation["A"]
+        countB = allocation["B"]
+        countC = allocation["C"]
+        countD = allocation["D"]
+        countE = allocation["E"]
 
-Section A - Multiple Choice Questions (1 mark each)
-Section B - Very Short Answer Questions (2 marks each)
-Section C - Short Answer Questions (3 marks each)
-Section D - Long Answer Questions (5 marks each)
-Section E - Case-Based Questions (4 marks each, may include sub-parts)
+        prompt = f"""
+Create a Class {class_name} {subject_name} question paper from these chapters:
+{chapters_text}
 
-All questions must be conceptually accurate and strictly from NCERT syllabus.
-Maintain Easy (40%), Medium (40%), Hard (20%) difficulty ratio.
-Include theory, reasoning, diagrams, and application-based questions.
+Total marks: {total_marks}
 
-Output only valid JSON in this structure:
+Use EXACTLY this many questions (computed by backend):
 
-Please respond with a JSON object containing an array of question objects with the following structure:
+A: {countA} MCQ (1 mark each)
+B: {countB} VSA (2 marks each)
+C: {countC} SA (3 marks each)
+D: {countD} LA (5 marks each)
+E: {countE} CASE (4 marks each, each CASE must contain 3 sub-questions: 1m, 1m, 2m)
+
+Rules:
+- Maintain difficulty split: Easy 40%, Medium 40%, Hard 20%.
+- All questions must be NCERT-based and conceptually correct.
+- Do NOT change counts/marks.
+- Output ONLY JSON in this structure:
+
 {{
   "sections": [
     {{
       "sectionName": "A",
-      "description": "Multiple Choice Questions (1 mark each)",
+      "description": "Multiple Choice Questions",
       "questions": [
         {{ "qNo": 1, "questionText": "", "marks": 1, "difficulty": "", "type": "MCQ", "options": ["", "", "", ""], "correctAnswer": "" }}
       ]
     }},
     {{
       "sectionName": "B",
-      "description": "Very Short Answer Questions (2 marks each)",
+      "description": "Very Short Answer Questions",
       "questions": [
         {{ "qNo": 1, "questionText": "", "marks": 2, "difficulty": "", "type": "VSA", "answerHints": "" }}
       ]
     }},
     {{
       "sectionName": "C",
-      "description": "Short Answer Questions (3 marks each)",
+      "description": "Short Answer Questions",
       "questions": [
         {{ "qNo": 1, "questionText": "", "marks": 3, "difficulty": "", "type": "SA", "answerHints": "" }}
       ]
     }},
     {{
       "sectionName": "D",
-      "description": "Long Answer Questions (5 marks each)",
+      "description": "Long Answer Questions",
       "questions": [
         {{ "qNo": 1, "questionText": "", "marks": 5, "difficulty": "", "type": "LA", "answerHints": "" }}
       ]
     }},
     {{
       "sectionName": "E",
-      "description": "Case-Based / Source-Based Questions (4 marks each)",
+      "description": "Case-Based / Source-Based Questions",
       "questions": [
         {{ 
           "qNo": 1, 
@@ -146,11 +158,6 @@ Please respond with a JSON object containing an array of question objects with t
       ]
     }}
   ],
-  "blueprint": {{
-    "marksDistribution": {{ "MCQ"|"VSA"|"SA"|"LA"|"CASE"  }},
-    "difficultySplit": {{ "Easy"|"Medium"|"Hard" }},
-    "skillsCovered": []
-  }},
   "instructions": [
     "All questions are compulsory.",
     "Answer the questions in sequence.",
@@ -158,6 +165,7 @@ Please respond with a JSON object containing an array of question objects with t
     "No overall choice, but internal choices may be given."
   ]
 }}"""
+        return prompt
     
     @staticmethod
     def get_student_tutor_system_prompt(subject_name: str = None, class_name: str = None) -> str:
