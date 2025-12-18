@@ -273,3 +273,62 @@ class OpenAIService:
                 conversation_turns=conversation_length
             )
             return False, "", error_msg
+    
+    async def generate_knowledge_points(self, board: str, grade: int, subject: str, chapter: str,
+                                       section: str = None) -> Tuple[bool, Dict[str, Any], str]:
+        self._check_client()
+        user_message = PromptTemplates.get_knowledge_points_prompt(
+            board=board,
+            grade=grade,
+            subject=subject,
+            chapter=chapter,
+            section=section
+        )
+        total_prompt_length = len(PromptTemplates.KNOWLEDGE_POINTS_SYSTEM) + len(user_message)
+        start_time = time.time()
+        try:
+            response = await self.client.responses.create(
+                model=self.config.model_name_5,
+                input=[
+                    {"role": "system", "content": PromptTemplates.KNOWLEDGE_POINTS_SYSTEM},
+                    {"role": "user", "content": user_message}
+                ],
+            )
+            duration = time.time() - start_time
+            raw_content = OpenAIHelper.extract_output_text(response)
+            success, data, error = JSONParser.extract_json_from_response(
+                raw_content, parse=True, fallback_to_raw=True
+            )
+            openai_timing_logger.log_api_call(
+                function_name="generate_knowledge_points",
+                model=self.config.model_name_5,
+                duration=duration,
+                tokens_used=getattr(response.usage, 'total_tokens', None),
+                success=success,
+                error_message=error if not success else None,
+                request_size=total_prompt_length,
+                board=board,
+                subject=subject,
+                grade=grade,
+                chapter=chapter,
+                section=section or "all",
+                response_length=len(raw_content) if raw_content else 0
+            )
+            return success, data, error
+        except Exception as e:
+            duration = time.time() - start_time
+            error_msg = str(e)
+            openai_timing_logger.log_api_call(
+                function_name="generate_knowledge_points",
+                model=self.config.model_name_5,
+                duration=duration,
+                success=False,
+                error_message=error_msg,
+                request_size=total_prompt_length,
+                board=board,
+                subject=subject,
+                grade=grade,
+                chapter=chapter,
+                section=section or "all"
+            )
+            return False, {}, error_msg

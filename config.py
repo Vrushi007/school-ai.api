@@ -18,15 +18,21 @@ class OpenAIConfig:
     
     def __init__(self):
         self.api_key = os.getenv("OPENAI_API_KEY")
-        self.model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")  # Default to gpt-4o-mini
+        self.model_default = os.getenv("OPENAI_MODEL_DEFAULT", "gpt-4o-mini")
+        self.model_5 = os.getenv("OPENAI_MODEL_5", "gpt-4o-mini")
         
         if not self.api_key:
             raise ValueError("OPENAI_API_KEY environment variable is not set")
     
     @property
     def model_name(self) -> str:
-        """Get the configured OpenAI model name"""
-        return self.model
+        """Get the default OpenAI model name"""
+        return self.model_default
+    
+    @property
+    def model_name_5(self) -> str:
+        """Get the OpenAI model for knowledge points"""
+        return self.model_5
 
 
 # Global configuration instance
