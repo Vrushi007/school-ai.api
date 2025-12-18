@@ -19,6 +19,39 @@ Always output ONLY valid JSON that matches the user-given structure and counts.
 Never add or remove questions. 
 Never modify marks per question."""
     
+    KNOWLEDGE_POINTS_SYSTEM = """You are an expert curriculum architect and assessment scientist.
+You specialize in CBSE/NCERT syllabus decomposition, competency-based education,
+Bloom's Taxonomy alignment, and Item Response Theory (IRT).
+
+Your task is to decompose curriculum content into atomic, teachable,
+and assessable Knowledge Points (KPs).
+
+Follow these rules strictly:
+- Each KP must represent ONE clear cognitive skill.
+- KPs must be atomic (no compound learning outcomes).
+- KPs must be ordered by prerequisite dependency.
+- Use NCERT terminology only.
+- Bloom level must match the action verb used.
+- IRT difficulty must increase with abstraction and integration.
+
+MANDATORY OUTPUT FORMAT:
+Return ONLY valid JSON in the EXACT structure provided by the user.
+Do NOT add, remove, or rename any fields.
+Do NOT add explanations, comments, or markdown.
+
+CONSTRAINT RULES:
+1. Foundational KPs must have an empty prerequisite_kps array.
+2. A KP must NOT depend on a KP from a later section.
+3. assessment_examples must be EXACTLY 2 per KP.
+4. misconception_tags must be concept-specific, not generic.
+5. difficulty_label must align with irt_difficulty:
+   - Very Easy: -3.0 to -2.0
+   - Easy: -2.0 to -1.0
+   - Medium: -1.0 to +1.0
+   - Hard: +1.0 to +2.0
+   - Very Hard: +2.0 to +3.0
+6. kp_id must be stable and deterministic."""
+    
     STUDENT_TUTOR_SYSTEM = """You are an expert tutor for Indian school students (CBSE/NCERT curriculum). 
 Your role is to provide detailed, educational answers to student questions.
 
@@ -177,3 +210,52 @@ Rules:
             subject_context=subject_context,
             class_context=class_context
         )
+
+    @staticmethod
+    def get_knowledge_points_prompt(board: str, grade: int, subject: str, chapter: str, section: str = None) -> str:
+        """Generate knowledge points decomposition prompt"""
+        section_spec = f"Section: {section}" if section else "Sections: All in chapter"
+        
+        return f"""CURRICULUM INPUT:
+
+Board: {board} (NCERT-aligned)
+Grade: {grade}
+Subject: {subject}
+Chapter: {chapter}
+{section_spec}
+
+MANDATORY OUTPUT FORMAT:
+
+Return ONLY valid JSON in the EXACT structure below.
+Do NOT add, remove, or rename any fields.
+Do NOT add explanations, comments, or markdown.
+
+{{
+  "syllabus": {{
+    "board": "{board}",
+    "grade": {grade},
+    "subject": "{subject}",
+    "chapter": "{chapter}",
+    "sections": [
+      {{
+        "section_title": "<string>",
+        "knowledge_points": [
+          {{
+            "kp_id": "<{board.lower()}{grade}_{subject.lower().replace(' ', '_')}_{chapter.lower().replace(' ', '_')}_kpXX>",
+            "kp_title": "<concise action-oriented title>",
+            "kp_description": "<what the student must demonstrably do>",
+            "bloom_level": "Remember | Understand | Apply | Analyze | Evaluate | Create",
+            "irt_difficulty": <float between -3.0 and +3.0>,
+            "difficulty_label": "Very Easy | Easy | Medium | Hard | Very Hard",
+            "prerequisite_kps": ["<kp_id>", "..."],
+            "misconception_tags": ["<snake_case_code>", "..."],
+            "assessment_examples": [
+              "<short observable example 1>",
+              "<short observable example 2>"
+            ]
+          }}
+        ]
+      }}
+    ]
+  }}
+}}"""
