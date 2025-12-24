@@ -44,7 +44,7 @@ async def generate_knowledge_points(request: KnowledgePointRequest):
         
         return APIResponse(
             success=True,
-            data={"knowledge_points": parsed_result},
+            data=parsed_result,
             message="Knowledge points generated successfully"
         )
         
