@@ -1,5 +1,6 @@
 import os
 import time
+import hashlib
 from typing import List, Dict, Any, Tuple
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
@@ -23,6 +24,38 @@ class OpenAIService:
     def _check_client(self):
         if not self.client:
             raise RuntimeError("OpenAI client is not initialized")
+
+    @staticmethod
+    def _generate_deterministic_kp_id(board: str, grade: int, subject: str, chapter: str, kp_index: int) -> str:
+        """Generate deterministic KP ID using content hash"""
+        # Create a base prefix from board, grade, subject
+        prefix = f"{board.lower()}{grade}_{subject.lower().replace(' ', '_')}"
+        
+        # Generate a hash based on chapter and index for determinism
+        content = f"{chapter.lower().replace(' ', '_')}_{kp_index}"
+        hash_digest = hashlib.md5(content.encode()).hexdigest()[:6]
+        
+        return f"{prefix}_{hash_digest}_kp{kp_index:02d}"
+
+    @staticmethod
+    def _post_process_knowledge_points(board: str, grade: int, subject: str, chapter: str, 
+                                       knowledge_points: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Post-process AI response: add kp_ids and flatten with metadata for DB storage"""
+        processed_kps = []
+        
+        # Add kp_id and metadata to each KP
+        for idx, kp in enumerate(knowledge_points, 1):
+            kp["kp_id"] = OpenAIService._generate_deterministic_kp_id(board, grade, subject, chapter, idx)
+            kp["board"] = board
+            kp["grade"] = grade
+            kp["subject"] = subject
+            kp["chapter"] = chapter
+            processed_kps.append(kp)
+        
+        # Return flattened structure (no nesting) for easier DB storage
+        return {
+            "knowledge_points": processed_kps
+        }
 
     async def generate_lesson_plan(self, subject_name: str, class_name: str, chapter_title: str,
                                    number_of_sessions: int, default_session_duration: str) -> Tuple[bool, Dict[str, Any], str]:
@@ -278,7 +311,6 @@ class OpenAIService:
                                        section: str = None) -> Tuple[bool, Dict[str, Any], str]:
         self._check_client()
         user_message = PromptTemplates.get_knowledge_points_prompt(
-            board=board,
             grade=grade,
             subject=subject,
             chapter=chapter,
@@ -299,6 +331,19 @@ class OpenAIService:
             success, data, error = JSONParser.extract_json_from_response(
                 raw_content, parse=True, fallback_to_raw=True
             )
+            
+            # Post-process: add kp_ids and wrap in syllabus structure
+            if success and isinstance(data, dict) and "knowledge_points" in data:
+                knowledge_points = data.get("knowledge_points", [])
+                processed_data = self._post_process_knowledge_points(
+                    board=board,
+                    grade=grade,
+                    subject=subject,
+                    chapter=chapter,
+                    knowledge_points=knowledge_points
+                )
+                data = processed_data
+            
             openai_timing_logger.log_api_call(
                 function_name="generate_knowledge_points",
                 model=self.config.model_name_5,

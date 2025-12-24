@@ -212,50 +212,55 @@ Rules:
         )
 
     @staticmethod
-    def get_knowledge_points_prompt(board: str, grade: int, subject: str, chapter: str, section: str = None) -> str:
-        """Generate knowledge points decomposition prompt"""
-        section_spec = f"Section: {section}" if section else "Sections: All in chapter"
+    def get_knowledge_points_prompt(grade: int, subject: str, chapter: str, section: str = None) -> str:
+        """Generate knowledge points decomposition prompt - simplified to AI-only KP generation"""
+        section_spec = f"Section: {section}" if section else "All sections in chapter"
         
-        return f"""CURRICULUM INPUT:
+        return f"""Decompose the curriculum into atomic, teachable Knowledge Points (KPs).
 
-Board: {board} (NCERT-aligned)
-Grade: {grade}
-Subject: {subject}
-Chapter: {chapter}
-{section_spec}
+CURRICULUM INPUT:
+- Grade: {grade}
+- Subject: {subject}
+- Chapter: {chapter}
+- Scope: {section_spec}
 
-MANDATORY OUTPUT FORMAT:
-
-Return ONLY valid JSON in the EXACT structure below.
-Do NOT add, remove, or rename any fields.
-Do NOT add explanations, comments, or markdown.
+RETURN ONLY this JSON structure (no syllabus wrapper):
 
 {{
-  "syllabus": {{
-    "board": "{board}",
-    "grade": {grade},
-    "subject": "{subject}",
-    "chapter": "{chapter}",
-    "sections": [
-      {{
-        "section_title": "<string>",
-        "knowledge_points": [
-          {{
-            "kp_id": "<{board.lower()}{grade}_{subject.lower().replace(' ', '_')}_{chapter.lower().replace(' ', '_')}_kpXX>",
-            "kp_title": "<concise action-oriented title>",
-            "kp_description": "<what the student must demonstrably do>",
-            "bloom_level": "Remember | Understand | Apply | Analyze | Evaluate | Create",
-            "irt_difficulty": <float between -3.0 and +3.0>,
-            "difficulty_label": "Very Easy | Easy | Medium | Hard | Very Hard",
-            "prerequisite_kps": ["<kp_id>", "..."],
-            "misconception_tags": ["<snake_case_code>", "..."],
-            "assessment_examples": [
-              "<short observable example 1>",
-              "<short observable example 2>"
-            ]
-          }}
+  "knowledge_points": [
+    {{
+      "section_title": "<section name>",
+      "kp_title": "<concise action-oriented title>",
+      "kp_description": "<what the student must demonstrably do>",
+      "bloom_level": "Remember | Understand | Apply | Analyze | Evaluate | Create",
+      "irt_difficulty": <float -3.0 to +3.0>,
+      "difficulty_label": "Very Easy | Easy | Medium | Hard | Very Hard",
+      "prerequisite_kps": ["<prerequisite_id_1>", "..."] or [],
+      "misconception_tags": ["<tag>", "..."],
+      "assessment_examples": ["<example 1>", "<example 2>"],
+      "detailed_explanation": "<100-150 word explanation>",
+      "auto_grading_components": {{
+        "conceptual_triples": [{{"triple": "<subject, predicate, object>"}}],
+        "key_terms_and_synonyms": [
+          {{"term": "<key term>", "synonyms": ["<synonym 1>", "<synonym 2>"]}}
+        ],
+        "assessment_criteria": [
+          {{"criterion": "<criterion>", "weightage": <int 0-100>}}
         ]
-      }}
-    ]
-  }}
-}}"""
+      }},
+      "tags": ["<tag1>", "<tag2>", "<tag3>"],
+      "real_world_applications": ["<application 1>", "<application 2>"]
+    }}
+  ]
+}}
+
+GUIDELINES:
+1. Each KP = ONE clear cognitive skill (atomic)
+2. Ordered by prerequisite dependency
+3. Bloom level must match action verbs
+4. IRT difficulty increases with abstraction
+5. Assessment examples = exactly 2
+6. Assessment criteria weightages sum to 100%
+7. Use NCERT terminology for {subject} Grade {grade}
+8. Prerequisite KPs reference placeholder IDs (server will generate final IDs)
+"""

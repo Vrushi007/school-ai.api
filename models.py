@@ -77,6 +77,26 @@ class AssessmentExample(BaseModel):
     example: str = Field(..., description="Observable assessment example")
 
 
+class ConceptualTriple(BaseModel):
+    triple: str = Field(..., description="Conceptual triple in format (subject, predicate, object)")
+
+
+class KeyTermSynonym(BaseModel):
+    term: str = Field(..., description="Key term")
+    synonyms: List[str] = Field(..., description="List of synonyms or related terms")
+
+
+class AssessmentCriterion(BaseModel):
+    criterion: str = Field(..., description="Assessment criterion description")
+    weightage: int = Field(..., description="Weightage percentage for this criterion")
+
+
+class AutoGradingComponents(BaseModel):
+    conceptual_triples: List[ConceptualTriple] = Field(..., description="Conceptual triples for knowledge representation")
+    key_terms_and_synonyms: List[KeyTermSynonym] = Field(..., description="Key terms with synonyms")
+    assessment_criteria: List[AssessmentCriterion] = Field(..., description="Assessment criteria with weightage")
+
+
 class KnowledgePoint(BaseModel):
     kp_id: str = Field(..., description="Unique knowledge point identifier")
     kp_title: str = Field(..., description="Concise action-oriented title")
@@ -87,6 +107,10 @@ class KnowledgePoint(BaseModel):
     prerequisite_kps: List[str] = Field(default_factory=list, description="IDs of prerequisite knowledge points")
     misconception_tags: List[str] = Field(default_factory=list, description="Concept-specific misconception tags")
     assessment_examples: List[str] = Field(..., description="Two observable examples for assessment")
+    detailed_explanation: str = Field(..., description="Comprehensive explanation of the knowledge point")
+    auto_grading_components: AutoGradingComponents = Field(..., description="Components for auto-grading system")
+    tags: List[str] = Field(..., description="Topic tags for categorization")
+    real_world_applications: List[str] = Field(..., description="Real-world applications and examples")
 
 
 class Section(BaseModel):
