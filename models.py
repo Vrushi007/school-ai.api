@@ -17,10 +17,19 @@ class SessionData(BaseModel):
     objectives: List[str]
 
 
+class KPDescription(BaseModel):
+    title: str = Field(..., description="Knowledge point title")
+    description: str = Field(..., description="Knowledge point description")
+
+
 class DetailedSessionRequest(BaseModel):
-    session_data: SessionData
-    subject_name: str
-    class_name: str
+    subject_name: str = Field(..., description="Subject name")
+    class_name: str = Field(..., description="Class/Grade")
+    title: str = Field(..., description="Session title")
+    duration: str = Field(..., description="Session duration")
+    summary: str = Field(..., description="Session summary")
+    objectives: List[str] = Field(..., description="List of session objectives")
+    kp_list: List[KPDescription] = Field(..., description="List of knowledge points with descriptions")
 
 
 class QuestionGenerationRequest(BaseModel):
@@ -128,3 +137,37 @@ class Syllabus(BaseModel):
 
 class KnowledgePointResponse(BaseModel):
     syllabus: Syllabus = Field(..., description="Syllabus structure with knowledge points")
+
+
+# Knowledge Point Grouping Models
+class KnowledgePointItem(BaseModel):
+    kp_id: int = Field(..., description="Knowledge point ID")
+    title: str = Field(..., description="Knowledge point title")
+    difficulty: str = Field(..., description="Difficulty level (Easy, Medium, Hard)")
+    cognitive_level: str = Field(..., description="Bloom's taxonomy level")
+    prerequisites: List[str] = Field(default_factory=list, description="List of prerequisite KP IDs")
+
+
+class GroupKPsRequest(BaseModel):
+    board: str = Field(default="CBSE", description="Curriculum board (e.g., CBSE, ICSE, State)")
+    chapter: str = Field(..., description="Chapter title")
+    class_name: str = Field(..., alias="class", description="Class/Grade (e.g., 10)")
+    subject: str = Field(..., description="Subject name (e.g., Science)")
+    number_of_sessions: int = Field(..., gt=0, description="Number of sessions to group into")
+    session_duration: str = Field(default="40 minutes", description="Duration of each session")
+    knowledge_points: List[KnowledgePointItem] = Field(..., description="List of knowledge points to group")
+    
+    class Config:
+        populate_by_name = True
+
+
+class SessionSummaryRequest(BaseModel):
+    board: str = Field(default="CBSE", description="Curriculum board (e.g., CBSE, ICSE, State)")
+    chapter: str = Field(..., description="Chapter title")
+    class_name: str = Field(..., alias="class", description="Class/Grade (e.g., 10)")
+    subject: str = Field(..., description="Subject name (e.g., Science)")
+    session_title: str = Field(..., description="Title of the teaching session")
+    knowledge_points: List[KnowledgePointItem] = Field(..., description="List of knowledge points in this session")
+    
+    class Config:
+        populate_by_name = True

@@ -10,7 +10,16 @@ class PromptTemplates:
     """Class containing all prompt templates for the School AI API"""
     
     # System messages for different functionalities
-    LESSON_PLAN_SYSTEM = """Expert CBSE/NCERT educator. Respond only in JSON."""
+    LESSON_PLAN_SYSTEM = """You are an expert CBSE/NCERT lesson planner and classroom pedagogy designer.
+
+You generate lesson plans STRICTLY based on provided Knowledge Points (KPs).
+You must NOT introduce new concepts, objectives, terminology, or examples
+that are not derivable from the given KPs.
+
+Always follow NCERT terminology and Class-appropriate pedagogy.
+
+Output ONE JSON object exactly matching the provided output schema.
+Do NOT add explanations, comments, or text outside JSON."""
     
     SESSION_CONTENT_SYSTEM = """Expert CBSE/NCERT lesson planner. Always output one JSON object exactly following the provided field names. No explanations, no text outside JSON. Keep age-appropriate, teacher-friendly tone."""
     
@@ -52,6 +61,66 @@ CONSTRAINT RULES:
    - Very Hard: +2.0 to +3.0
 6. kp_id must be stable and deterministic."""
     
+    SESSION_SUMMARY_SYSTEM = """You are an experienced school teacher preparing a lesson plan for another teacher.
+
+Your task is to create a concise instructional overview for a teaching session.
+
+Guidelines for the summary:
+- Write strictly for teachers, not for students.
+- Describe the teaching focus and scope of this session.
+- Limit the summary to 2–4 sentences.
+- Do NOT include activities, assessments, or student engagement language.
+- Do NOT mention knowledge point codes or IDs.
+
+Guidelines for the objectives:
+- Provide 2–4 objectives.
+- Each objective should describe what the teacher intends to cover or emphasise.
+- Use clear instructional verbs (e.g., introduce, explain, distinguish, demonstrate).
+- Keep objectives aligned strictly to the given knowledge points.
+- Avoid student-facing phrasing such as "students will enjoy".
+
+Output Rules:
+- Return ONLY valid JSON.
+- Do NOT include any explanatory text outside JSON.
+- Do NOT include session title, duration, or numbering.
+- The JSON must contain exactly two top-level properties: "summary" and "objectives".
+
+Expected JSON format:
+
+{
+  "summary": "",
+  "objectives": []
+}"""
+    
+    @staticmethod
+    def get_kp_grouping_system_prompt(board: str = "CBSE") -> str:
+        """Generate KP grouping system prompt with board context"""
+        board_context = f"{board}/NCERT" if board == "CBSE" else board
+        return f"""You are an expert school curriculum planner specializing in {board_context} curriculum.
+
+Group the given knowledge points into the specified number of teaching sessions.
+Each session represents one classroom period of ~40 minutes.
+
+Rules:
+- Respect prerequisite order between knowledge points.
+- Each session should cover a coherent concept flow.
+- A session may include multiple knowledge points.
+- Do NOT split a single knowledge point across sessions.
+- Ensure earlier sessions are easier and later sessions progress in difficulty.
+- Follow {board_context} pedagogical standards and terminology.
+
+Return ONLY valid JSON in the following format:
+
+{{
+  "sessions": [
+    {{
+      "session_number": 1,
+      "session_title": "...",
+      "kp_ids": ["kp01", "kp02"]
+    }}
+  ]
+}}"""
+    
     STUDENT_TUTOR_SYSTEM = """You are an expert tutor for Indian school students (CBSE/NCERT curriculum). 
 Your role is to provide detailed, educational answers to student questions.
 
@@ -84,23 +153,20 @@ Format:
 [{{"sessionNumber": 1, "title": "", "summary": "", "duration": "{default_session_duration}", "objectives": []}}]"""
     
     @staticmethod
-    def get_session_content_prompt(session_data: Dict[str, Any], subject_name: str, class_name: str) -> str:
+    def get_session_content_prompt(title: str, subject_name: str, class_name: str, duration: str, summary: str, objectives: List[str], kp_list_with_description: str) -> str:
         """Generate detailed session content prompt"""
-        objectives_text = chr(10).join([f"- {obj}" for obj in session_data.get('objectives', [])])
-        
         return f"""Generate a detailed lesson plan for:
-
-Session Title: {session_data.get('title')}
+Session Title: {title}
 Subject: {subject_name}
 Class: {class_name} standard
-Duration: {session_data.get('duration')}
-Summary: {session_data.get('summary')}
-
+Duration: {duration}
+Instructional Summary:
+{summary}
 Learning Objectives:
-{objectives_text}
-
+{objectives}
+Knowledge Points to be covered in this session:
+{kp_list_with_description}
 Output JSON keys (fill with relevant content, no placeholders):
-
 {{
   "teachingScript": {{ "overview": "", "stepByStep": [{{ "time": "", "teacherLines": "", "studentActivity": "" }}], "transitions": "" }},
   "boardWorkPlan": {{ "definitions": [], "lawsOrRules": [{{ "name": "", "statement": "", "notation": "" }}], "diagramsToDraw": [{{ "label": "", "instructions": "", "placeholderTag": "" }}], "keywords": [] }},
@@ -264,3 +330,77 @@ GUIDELINES:
 7. Use NCERT terminology for {subject} Grade {grade}
 8. Prerequisite KPs reference placeholder IDs (server will generate final IDs)
 """
+
+    @staticmethod
+    def get_kp_grouping_prompt(board: str, chapter: str, class_name: str, subject: str, 
+                              number_of_sessions: int, session_duration: str,
+                              knowledge_points: List[Dict[str, Any]]) -> str:
+        """Generate KP grouping into sessions prompt"""
+        kps_formatted = "\n".join([
+            f"  - {kp['kp_id']}: {kp['title']} (Difficulty: {kp['difficulty']}, "
+            f"Cognitive: {kp['cognitive_level']}, Prerequisites: {kp['prerequisites']})"
+            for kp in knowledge_points
+        ])
+        
+        board_context = f"{board}/NCERT" if board == "CBSE" else board
+        
+        return f"""Group the following knowledge points into {number_of_sessions} teaching sessions.
+
+Board: {board_context}
+Chapter: {chapter}
+Class: {class_name}
+Subject: {subject}
+Session Duration: {session_duration}
+
+Knowledge Points:
+{kps_formatted}
+
+Provide {number_of_sessions} sessions with coherent grouping that respects:
+1. Prerequisite dependencies (prerequisites must come in earlier sessions)
+2. Cognitive progression (easier → harder)
+3. Conceptual coherence within each session
+4. Balanced distribution across sessions
+5. {board_context} curriculum standards and terminology
+
+Return ONLY JSON in this exact format:
+{{
+  "sessions": [
+    {{
+      "session_number": 1,
+      "session_title": "...",
+      "kp_ids": ["1", "2", "3"]
+    }}
+  ]
+}}"""
+
+    @staticmethod
+    def get_session_summary_prompt(board: str, chapter: str, class_name: str, subject: str,
+                                   session_title: str, knowledge_points: List[Dict[str, Any]]) -> str:
+        """Generate session summary prompt"""
+        board_context = f"{board}/NCERT" if board == "CBSE" else board
+        
+        kps_formatted = "\n".join([
+            f"  - {kp['title']} (Cognitive Level: {kp['cognitive_level']}, Difficulty: {kp['difficulty']})"
+            for kp in knowledge_points
+        ])
+        
+        return f"""Context:
+- Board: {board_context}
+- Chapter: {chapter}
+- Class: {class_name}
+- Subject: {subject}
+- Session Title: {session_title}
+
+Knowledge Points included in this session:
+{kps_formatted}
+
+Task:
+Create a concise instructional overview for this session consisting of:
+1. A short session summary (2-4 sentences)
+2. A list of instructional objectives (2-4 objectives)
+
+Return ONLY JSON in this exact format:
+{{
+  "summary": "",
+  "objectives": []
+}}"""
