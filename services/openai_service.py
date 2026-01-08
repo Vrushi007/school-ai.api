@@ -2,6 +2,7 @@ import os
 import time
 import hashlib
 from typing import List, Dict, Any, Tuple
+from models import KPDescription
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
 from utils.json_parser import JSONParser
@@ -111,16 +112,26 @@ class OpenAIService:
             )
             return False, {}, error_msg
 
-    async def generate_detailed_session_content(self, session_data: Dict[str, Any],
-                                                subject_name: str, class_name: str) -> Any:
+    async def generate_detailed_session_content(self, title: str, subject_name: str, class_name: str, duration: str, summary: str, objectives: List[str], kp_list_with_description: List[KPDescription]) -> Any:
         self._check_client()
+        
+        # Convert KP list to formatted string
+        kps_formatted = "\n".join([
+            f"{i}. Title: {kp.title}, Description: {kp.description}"
+            for i, kp in enumerate(kp_list_with_description, 1)
+        ])
+        
         user_message = PromptTemplates.get_session_content_prompt(
-            session_data=session_data,
+            title=title,
             subject_name=subject_name,
-            class_name=class_name
+            class_name=class_name,
+            duration=duration,
+            summary=summary,
+            objectives="\n".join([f"- {obj}" for obj in objectives]),
+            kp_list_with_description=kps_formatted
         )
         total_prompt_length = len(PromptTemplates.SESSION_CONTENT_SYSTEM) + len(user_message)
-        session_title = session_data.get('title', 'Unknown Session')
+        session_title = title
         start_time = time.time()
         try:
             response = await self.client.responses.create(
@@ -133,12 +144,12 @@ class OpenAIService:
             duration = time.time() - start_time
             raw_content = OpenAIHelper.extract_output_text(response)
             response_metadata = {
-                "sessionTitle": session_data.get('title'),
+                "sessionTitle": title,
                 "subject": subject_name,
                 "class": class_name,
-                "duration": session_data.get('duration'),
-                "summary": session_data.get('summary'),
-                "objectives": session_data.get('objectives', []),
+                "duration": duration,
+                "summary": summary,
+                "objectives": "\t".join([f"- {obj}" for obj in objectives]),
             }
             json_parse_success, result, error_message = JSONParser.extract_json_from_response(
                 raw_content, result_metadata=response_metadata, parse=True, fallback_to_raw=True
@@ -375,5 +386,140 @@ class OpenAIService:
                 grade=grade,
                 chapter=chapter,
                 section=section or "all"
+            )
+            return False, {}, error_msg
+
+    async def group_kps_into_sessions(self, board: str, chapter: str, class_name: str, subject: str,
+                                     number_of_sessions: int, session_duration: str,
+                                     knowledge_points: List[Dict[str, Any]]) -> Tuple[bool, Dict[str, Any], str]:
+        """Group knowledge points into teaching sessions"""
+        self._check_client()
+        
+        # Generate dynamic system prompt with board context
+        system_prompt = PromptTemplates.get_kp_grouping_system_prompt(board=board)
+        
+        user_message = PromptTemplates.get_kp_grouping_prompt(
+            board=board,
+            chapter=chapter,
+            class_name=class_name,
+            subject=subject,
+            number_of_sessions=number_of_sessions,
+            session_duration=session_duration,
+            knowledge_points=knowledge_points
+        )
+        total_prompt_length = len(system_prompt) + len(user_message)
+        start_time = time.time()
+        try:
+            response = await self.client.responses.create(
+                model=self.config.model_name,
+                input=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_message}
+                ],
+            )
+            duration = time.time() - start_time
+            raw_content = OpenAIHelper.extract_output_text(response)
+            success, data, error = JSONParser.extract_json_from_response(
+                raw_content, parse=True, fallback_to_raw=True
+            )
+            
+            openai_timing_logger.log_api_call(
+                function_name="group_kps_into_sessions",
+                model=self.config.model_name,
+                duration=duration,
+                tokens_used=getattr(response.usage, 'total_tokens', None),
+                success=success,
+                error_message=error if not success else None,
+                request_size=total_prompt_length,
+                board=board,
+                subject=subject,
+                class_name=class_name,
+                chapter=chapter,
+                num_sessions=number_of_sessions,
+                num_kps=len(knowledge_points),
+                response_length=len(raw_content) if raw_content else 0
+            )
+            return success, data, error
+        except Exception as e:
+            duration = time.time() - start_time
+            error_msg = str(e)
+            openai_timing_logger.log_api_call(
+                function_name="group_kps_into_sessions",
+                model=self.config.model_name,
+                duration=duration,
+                success=False,
+                error_message=error_msg,
+                request_size=total_prompt_length,
+                board=board,
+                subject=subject,
+                class_name=class_name,
+                chapter=chapter,
+                num_sessions=number_of_sessions,
+                num_kps=len(knowledge_points)
+            )
+            return False, {}, error_msg
+
+    async def generate_session_summary(self, board: str, chapter: str, class_name: str, subject: str,
+                                      session_title: str, knowledge_points: List[Dict[str, Any]]) -> Tuple[bool, Dict[str, Any], str]:
+        """Generate session summary and objectives from knowledge points"""
+        self._check_client()
+        
+        user_message = PromptTemplates.get_session_summary_prompt(
+            board=board,
+            chapter=chapter,
+            class_name=class_name,
+            subject=subject,
+            session_title=session_title,
+            knowledge_points=knowledge_points
+        )
+        total_prompt_length = len(PromptTemplates.SESSION_SUMMARY_SYSTEM) + len(user_message)
+        start_time = time.time()
+        try:
+            response = await self.client.responses.create(
+                model=self.config.model_name,
+                input=[
+                    {"role": "system", "content": PromptTemplates.SESSION_SUMMARY_SYSTEM},
+                    {"role": "user", "content": user_message}
+                ],
+            )
+            duration = time.time() - start_time
+            raw_content = OpenAIHelper.extract_output_text(response)
+            success, data, error = JSONParser.extract_json_from_response(
+                raw_content, parse=True, fallback_to_raw=True
+            )
+            
+            openai_timing_logger.log_api_call(
+                function_name="generate_session_summary",
+                model=self.config.model_name,
+                duration=duration,
+                tokens_used=getattr(response.usage, 'total_tokens', None),
+                success=success,
+                error_message=error if not success else None,
+                request_size=total_prompt_length,
+                board=board,
+                chapter=chapter,
+                subject=subject,
+                class_name=class_name,
+                session_title=session_title,
+                num_kps=len(knowledge_points),
+                response_length=len(raw_content) if raw_content else 0
+            )
+            return success, data, error
+        except Exception as e:
+            duration = time.time() - start_time
+            error_msg = str(e)
+            openai_timing_logger.log_api_call(
+                function_name="generate_session_summary",
+                model=self.config.model_name,
+                duration=duration,
+                success=False,
+                error_message=error_msg,
+                request_size=total_prompt_length,
+                board=board,
+                chapter=chapter,
+                subject=subject,
+                class_name=class_name,
+                session_title=session_title,
+                num_kps=len(knowledge_points)
             )
             return False, {}, error_msg
