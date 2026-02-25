@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**School AI API** is a FastAPI-based service that generates CBSE/NCERT-aligned educational content using OpenAI. It's designed for Indian school standards with core features: lesson plan generation, detailed session content, and question paper creation.
+**School AI API** is a FastAPI-based service that generates curriculum-aligned educational content using OpenAI. It supports multiple education boards (CBSE, ICSE, IB, State Boards, etc.) with core features: lesson plan generation, detailed session content, and question paper creation.
 
 ## Architecture
 
@@ -91,7 +91,7 @@ python main.py  # Starts on localhost:8000
 2. **Field Naming**: Use snake_case for JSON requests/responses. Pydantic models enforce this.
 3. **Session Data**: Always include `title`, `summary`, `duration`, `objectives` in session requests.
 4. **Resource Integration**: Session content includes YouTube search (via `YouTubeHelper`) based on keywords from AI response.
-5. **CBSE/NCERT Focus**: Prompts explicitly mention this. Content is age-appropriate for Indian school curriculum.
+5. **Multi-Board Support**: Prompts accept board parameter to customize content. Content is age-appropriate and follows curriculum standards.
 
 ## Adding New Features
 

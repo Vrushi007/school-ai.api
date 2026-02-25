@@ -18,7 +18,7 @@ async def generate_knowledge_points(request: KnowledgePointRequest):
     Generate knowledge points for a curriculum chapter using OpenAI API
     
     This endpoint decomposes curriculum content into atomic, teachable,
-    and assessable Knowledge Points (KPs) aligned with CBSE/NCERT standards,
+    and assessable Knowledge Points (KPs) aligned with curriculum standards,
     Bloom's Taxonomy, and Item Response Theory (IRT) difficulty metrics.
     """
     try:

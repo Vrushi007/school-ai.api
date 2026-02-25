@@ -1,14 +1,19 @@
 # School AI API
 
-A Python web API application that integrates with OpenAI to generate educational content including lesson plans, detailed session content, and questions for Indian school standards (CBSE/NCERT).
+A Python web API application that integrates with OpenAI to generate educational content including lesson plans, detailed session content, and questions for multiple education boards and curricula.
 
 ## Features
 
+- **Knowledge Point Generation**: Decompose curriculum content into atomic, teachable knowledge points aligned with curriculum standards, Bloom's Taxonomy, and IRT difficulty metrics
+- **AI-Powered Session Planning**: Intelligently group knowledge points into teaching sessions respecting prerequisite dependencies
+- **Session Summary Generation**: Generate teacher-focused instructional overviews and objectives for teaching sessions
 - **Lesson Plan Generation**: Create structured lesson plans with multiple sessions
 - **Detailed Session Content**: Generate comprehensive lesson content with activities, assessments, and resources
+- **YouTube Integration**: Automatically fetch relevant educational videos based on session content
 - **Question Generation**: Create diverse question sets with various difficulty levels and types
+- **Student Q&A Chatbot**: Conversational AI assistant for student questions with context-aware responses
 - **JSON Parser Integration**: Handles malformed OpenAI responses gracefully
-- **CBSE/NCERT Aligned**: Content specifically designed for Indian school standards
+- **Multi-Board Support**: Works with various education boards (CBSE, ICSE, IB, State Boards, etc.)
 - **RESTful API**: Clean, well-documented API endpoints
 - **Error Handling**: Comprehensive error handling and logging
 
@@ -33,11 +38,24 @@ Then visit: http://localhost:8000/docs
 - `GET /` - Root endpoint with API status
 - `GET /health` - Health check endpoint
 
-### Educational Content Generation
+### Knowledge Points
 
-- `POST /api/generate-lesson-plan` - Generate lesson plans
-- `POST /api/generate-detailed-content-for-session` - Generate detailed session content
+- `POST /api/generate-knowledge-points` - Generate curriculum-aligned knowledge points for a chapter
+
+### Lesson Planning
+
+- `POST /api/generate-lesson-plan` - Generate lesson plans with multiple sessions
+- `POST /api/group-kps-into-sessions` - Intelligently group knowledge points into teaching sessions
+- `POST /api/generate-session-summary` - Generate session summary and objectives from knowledge points
+- `POST /api/generate-detailed-content-for-session` - Generate detailed session content with YouTube videos
+
+### Assessment
+
 - `POST /api/generate-questions` - Generate questions and assessments
+
+### Student Support
+
+- `POST /api/get-answers` - Student Q&A chatbot with conversation history support
 
 ## Setup Instructions
 
@@ -200,22 +218,38 @@ All API endpoints return responses in this standardized format:
 ## Project Structure
 
 ```
-dummy-school-ai.api/
-├── main.py              # FastAPI application and routes
-├── openai_service.py    # OpenAI service integration
-├── models.py            # Pydantic models for request/response
-├── utils/               # Utility modules
-│   ├── __init__.py     # Utils package init
-│   └── json_parser.py  # JSON parsing utilities
-├── requirements.txt     # Complete Python dependencies
-├── requirements-minimal.txt # Minimal dependencies for basic setup
-├── .env.example         # Environment variables template
-├── .env                 # Environment variables (create from .env.example)
-├── .gitignore          # Git ignore file
-├── test_api.py         # API testing script
-├── test_json_parser.py # JSON parser testing script
-├── start.sh            # Startup script
-└── README.md           # This file
+school-ai.api/
+├── main.py                    # FastAPI application and routes
+├── config.py                  # Configuration and app setup
+├── models.py                  # Pydantic models for request/response
+├── prompts.py                 # AI prompts for content generation
+├── exceptions.py              # Custom exception handlers
+├── routers/                   # API route modules
+│   ├── __init__.py
+│   ├── health.py              # Health check endpoints
+│   ├── lesson_planning.py     # Lesson planning endpoints
+│   ├── knowledge_points.py    # Knowledge point generation
+│   ├── questions.py           # Question generation
+│   └── student.py             # Student Q&A chatbot
+├── services/                  # Business logic layer
+│   ├── __init__.py
+│   ├── openai_service.py      # OpenAI API integration
+│   └── openai_helper.py       # OpenAI helper functions
+├── helpers/                   # Helper modules
+│   └── youtube.py             # YouTube video search integration
+├── utils/                     # Utility modules
+│   ├── __init__.py
+│   ├── json_parser.py         # JSON parsing utilities
+│   └── openai_logger.py       # OpenAI API logging
+├── requirements.txt           # Complete Python dependencies
+├── requirements-minimal.txt   # Minimal dependencies for basic setup
+├── .env.example               # Environment variables template
+├── .env                       # Environment variables (create from .env.example)
+├── .gitignore                 # Git ignore file
+├── test_api.py                # API testing script
+├── test_json_parser.py        # JSON parser testing script
+├── start.sh                   # Startup script
+└── README.md                  # This file
 ```
 
 ## Environment Variables

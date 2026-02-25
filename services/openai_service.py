@@ -141,7 +141,6 @@ class OpenAIService:
                     {"role": "user", "content": user_message}
                 ],
             )
-            duration = time.time() - start_time
             raw_content = OpenAIHelper.extract_output_text(response)
             response_metadata = {
                 "sessionTitle": title,
@@ -160,7 +159,7 @@ class OpenAIService:
             openai_timing_logger.log_api_call(
                 function_name="generate_detailed_session_content",
                 model=self.config.model_name,
-                duration=duration,
+                duration=time.time() - start_time,
                 tokens_used=getattr(response.usage, 'total_tokens', None),
                 success=json_parse_success,
                 error_message=error_message,
@@ -173,12 +172,11 @@ class OpenAIService:
             )
             return result
         except Exception as e:
-            duration = time.time() - start_time
             error_msg = str(e)
             openai_timing_logger.log_api_call(
                 function_name="generate_detailed_session_content",
                 model=self.config.model_name,
-                duration=duration,
+                duration=time.time() - start_time,
                 success=False,
                 error_message=error_msg,
                 request_size=total_prompt_length,
@@ -238,12 +236,11 @@ class OpenAIService:
             )
             return success, data, error
         except Exception as e:
-            duration = time.time() - start_time
             error_msg = str(e)
             openai_timing_logger.log_api_call(
                 function_name="generate_questions",
                 model=self.config.model_name,
-                duration=duration,
+                duration=time.time() - start_time,
                 success=False,
                 error_message=error_msg,
                 request_size=total_prompt_length,
@@ -322,6 +319,7 @@ class OpenAIService:
                                        section: str = None) -> Tuple[bool, Dict[str, Any], str]:
         self._check_client()
         user_message = PromptTemplates.get_knowledge_points_prompt(
+            board=board,
             grade=grade,
             subject=subject,
             chapter=chapter,

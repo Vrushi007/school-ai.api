@@ -75,8 +75,8 @@ class StudentAnswerResponse(BaseModel):
 
 # Knowledge Points Models
 class KnowledgePointRequest(BaseModel):
-    board: str = Field(default="CBSE", description="Curriculum board (e.g., CBSE, ICSE, State)")
-    grade: int = Field(..., description="Grade/Class (e.g., 5, 10)")
+    board: str = Field(default="CBSE", description="Curriculum board (e.g., CBSE, ICSE, IB, State Boards)")
+    grade: str = Field(..., description="Grade/Class (e.g., 5, 10)")
     subject: str = Field(..., description="Subject name (e.g., Mathematics, Science)")
     chapter: str = Field(..., description="Chapter title")
     section: Optional[str] = Field(None, description="Specific section within chapter (optional)")
@@ -149,7 +149,7 @@ class KnowledgePointItem(BaseModel):
 
 
 class GroupKPsRequest(BaseModel):
-    board: str = Field(default="CBSE", description="Curriculum board (e.g., CBSE, ICSE, State)")
+    board: str = Field(default="CBSE", description="Curriculum board (e.g., CBSE, ICSE, IB, State Boards)")
     chapter: str = Field(..., description="Chapter title")
     class_name: str = Field(..., alias="class", description="Class/Grade (e.g., 10)")
     subject: str = Field(..., description="Subject name (e.g., Science)")
@@ -162,7 +162,7 @@ class GroupKPsRequest(BaseModel):
 
 
 class SessionSummaryRequest(BaseModel):
-    board: str = Field(default="CBSE", description="Curriculum board (e.g., CBSE, ICSE, State)")
+    board: str = Field(default="CBSE", description="Curriculum board (e.g., CBSE, ICSE, IB, State Boards)")
     chapter: str = Field(..., description="Chapter title")
     class_name: str = Field(..., alias="class", description="Class/Grade (e.g., 10)")
     subject: str = Field(..., description="Subject name (e.g., Science)")

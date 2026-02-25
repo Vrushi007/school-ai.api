@@ -10,26 +10,26 @@ class PromptTemplates:
     """Class containing all prompt templates for the School AI API"""
     
     # System messages for different functionalities
-    LESSON_PLAN_SYSTEM = """You are an expert CBSE/NCERT lesson planner and classroom pedagogy designer.
+    LESSON_PLAN_SYSTEM = """You are an expert educational lesson planner and classroom pedagogy designer.
 
 You generate lesson plans STRICTLY based on provided Knowledge Points (KPs).
 You must NOT introduce new concepts, objectives, terminology, or examples
 that are not derivable from the given KPs.
 
-Always follow NCERT terminology and Class-appropriate pedagogy.
+Always follow curriculum-appropriate terminology and age-appropriate pedagogy.
 
 Output ONE JSON object exactly matching the provided output schema.
 Do NOT add explanations, comments, or text outside JSON."""
     
-    SESSION_CONTENT_SYSTEM = """Expert CBSE/NCERT lesson planner. Always output one JSON object exactly following the provided field names. No explanations, no text outside JSON. Keep age-appropriate, teacher-friendly tone."""
+    SESSION_CONTENT_SYSTEM = """Expert educational lesson planner. Always output one JSON object exactly following the provided field names. No explanations, no text outside JSON. Keep age-appropriate, teacher-friendly tone."""
     
-    QUESTIONS_SYSTEM = """You create CBSE/NCERT-aligned question papers. 
+    QUESTIONS_SYSTEM = """You create curriculum-aligned question papers. 
 Always output ONLY valid JSON that matches the user-given structure and counts. 
 Never add or remove questions. 
 Never modify marks per question."""
     
     KNOWLEDGE_POINTS_SYSTEM = """You are an expert curriculum architect and assessment scientist.
-You specialize in CBSE/NCERT syllabus decomposition, competency-based education,
+You specialize in educational syllabus decomposition, competency-based education,
 Bloom's Taxonomy alignment, and Item Response Theory (IRT).
 
 Your task is to decompose curriculum content into atomic, teachable,
@@ -39,7 +39,7 @@ Follow these rules strictly:
 - Each KP must represent ONE clear cognitive skill.
 - KPs must be atomic (no compound learning outcomes).
 - KPs must be ordered by prerequisite dependency.
-- Use NCERT terminology only.
+- Use appropriate curriculum terminology.
 - Bloom level must match the action verb used.
 - IRT difficulty must increase with abstraction and integration.
 
@@ -95,8 +95,7 @@ Expected JSON format:
     @staticmethod
     def get_kp_grouping_system_prompt(board: str = "CBSE") -> str:
         """Generate KP grouping system prompt with board context"""
-        board_context = f"{board}/NCERT" if board == "CBSE" else board
-        return f"""You are an expert school curriculum planner specializing in {board_context} curriculum.
+        return f"""You are an expert school curriculum planner specializing in {board} curriculum.
 
 Group the given knowledge points into the specified number of teaching sessions.
 Each session represents one classroom period of ~40 minutes.
@@ -107,7 +106,7 @@ Rules:
 - A session may include multiple knowledge points.
 - Do NOT split a single knowledge point across sessions.
 - Ensure earlier sessions are easier and later sessions progress in difficulty.
-- Follow {board_context} pedagogical standards and terminology.
+- Follow {board} pedagogical standards and terminology.
 
 Return ONLY valid JSON in the following format:
 
@@ -121,7 +120,7 @@ Return ONLY valid JSON in the following format:
   ]
 }}"""
     
-    STUDENT_TUTOR_SYSTEM = """You are an expert tutor for Indian school students (CBSE/NCERT curriculum). 
+    STUDENT_TUTOR_SYSTEM = """You are an expert tutor for school students. 
 Your role is to provide detailed, educational answers to student questions.
 
 Guidelines:
@@ -206,7 +205,7 @@ E: {countE} CASE (4 marks each, each CASE must contain 3 sub-questions: 1m, 1m, 
 
 Rules:
 - Maintain difficulty split: Easy 40%, Medium 40%, Hard 20%.
-- All questions must be NCERT-based and conceptually correct.
+- All questions must be curriculum-based and conceptually correct.
 - Do NOT change counts/marks.
 - Output ONLY JSON in this structure:
 
@@ -278,14 +277,15 @@ Rules:
         )
 
     @staticmethod
-    def get_knowledge_points_prompt(grade: int, subject: str, chapter: str, section: str = None) -> str:
+    def get_knowledge_points_prompt(board: str, grade: str, subject: str, chapter: str, section: str = None) -> str:
         """Generate knowledge points decomposition prompt - simplified to AI-only KP generation"""
         section_spec = f"Section: {section}" if section else "All sections in chapter"
         
         return f"""Decompose the curriculum into atomic, teachable Knowledge Points (KPs).
 
 CURRICULUM INPUT:
-- Grade: {grade}
+- Board: {board}
+- Grade/Semester: {grade}
 - Subject: {subject}
 - Chapter: {chapter}
 - Scope: {section_spec}
@@ -327,7 +327,7 @@ GUIDELINES:
 4. IRT difficulty increases with abstraction
 5. Assessment examples = exactly 2
 6. Assessment criteria weightages sum to 100%
-7. Use NCERT terminology for {subject} Grade {grade}
+7. Use appropriate curriculum terminology for {subject} Grade {grade}
 8. Prerequisite KPs reference placeholder IDs (server will generate final IDs)
 """
 
@@ -342,11 +342,9 @@ GUIDELINES:
             for kp in knowledge_points
         ])
         
-        board_context = f"{board}/NCERT" if board == "CBSE" else board
-        
         return f"""Group the following knowledge points into {number_of_sessions} teaching sessions.
 
-Board: {board_context}
+Board: {board}
 Chapter: {chapter}
 Class: {class_name}
 Subject: {subject}
@@ -360,7 +358,7 @@ Provide {number_of_sessions} sessions with coherent grouping that respects:
 2. Cognitive progression (easier → harder)
 3. Conceptual coherence within each session
 4. Balanced distribution across sessions
-5. {board_context} curriculum standards and terminology
+5. {board} curriculum standards and terminology
 
 Return ONLY JSON in this exact format:
 {{
@@ -377,7 +375,6 @@ Return ONLY JSON in this exact format:
     def get_session_summary_prompt(board: str, chapter: str, class_name: str, subject: str,
                                    session_title: str, knowledge_points: List[Dict[str, Any]]) -> str:
         """Generate session summary prompt"""
-        board_context = f"{board}/NCERT" if board == "CBSE" else board
         
         kps_formatted = "\n".join([
             f"  - {kp['title']} (Cognitive Level: {kp['cognitive_level']}, Difficulty: {kp['difficulty']})"
@@ -385,7 +382,7 @@ Return ONLY JSON in this exact format:
         ])
         
         return f"""Context:
-- Board: {board_context}
+- Board: {board}
 - Chapter: {chapter}
 - Class: {class_name}
 - Subject: {subject}
