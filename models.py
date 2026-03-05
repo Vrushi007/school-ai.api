@@ -80,6 +80,7 @@ class KnowledgePointRequest(BaseModel):
     subject: str = Field(..., description="Subject name (e.g., Mathematics, Science)")
     chapter: str = Field(..., description="Chapter title")
     section: Optional[str] = Field(None, description="Specific section within chapter (optional)")
+    provider: Optional[str] = Field(None, description="AI provider to use: 'openai' or 'sarvam'. If not specified, uses AI_PROVIDER env variable")
 
 
 class AssessmentExample(BaseModel):

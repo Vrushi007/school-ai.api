@@ -1,21 +1,25 @@
 import logging
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 
 from helpers.youtube import YouTubeHelper
 from models import LessonPlanRequest, DetailedSessionRequest, GroupKPsRequest, SessionSummaryRequest, APIResponse
-from services.openai_service import OpenAIService
+from services.ai_service_factory import get_ai_service
+from utils.auth_dependencies import get_current_user_id
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["lesson-planning"])
 
-# Initialize OpenAI service
-openai_service = OpenAIService()
+# Get AI service (switches between OpenAI and SarvamAI based on env variable)
+ai_service = get_ai_service()
 youtube_service = YouTubeHelper()
 
 
 @router.post("/generate-lesson-plan", response_model=APIResponse)
-async def generate_lesson_plan(request: LessonPlanRequest):
+async def generate_lesson_plan(
+    request: LessonPlanRequest,
+    user_id: int = Depends(get_current_user_id)
+):
     """
     Generate a lesson plan using OpenAI API
     
@@ -26,8 +30,8 @@ async def generate_lesson_plan(request: LessonPlanRequest):
     try:
         logger.info(f"Generating lesson plan for {request.subject_name} - {request.chapter_title}")
         
-        # Call OpenAI service
-        success, parsed_result, error = await openai_service.generate_lesson_plan(
+        # Call AI service
+        success, parsed_result, error = await ai_service.generate_lesson_plan(
             subject_name=request.subject_name,
             class_name=request.class_name,
             chapter_title=request.chapter_title,
@@ -66,7 +70,10 @@ async def generate_lesson_plan(request: LessonPlanRequest):
 
 
 @router.post("/generate-detailed-content-for-session", response_model=APIResponse)
-async def generate_session_content(request: DetailedSessionRequest):
+async def generate_session_content(
+    request: DetailedSessionRequest,
+    user_id: int = Depends(get_current_user_id)
+):
     """
     Generate detailed content for a specific session using OpenAI API
     
@@ -79,8 +86,8 @@ async def generate_session_content(request: DetailedSessionRequest):
     try:
         logger.info(f"Generating session content for: {request.title}")
         
-        # Call OpenAI service to get response
-        response = await openai_service.generate_detailed_session_content(
+        # Call AI service to get response
+        response = await ai_service.generate_detailed_session_content(
             title=request.title,
             subject_name=request.subject_name,
             class_name=request.class_name,
@@ -127,7 +134,10 @@ async def generate_session_content(request: DetailedSessionRequest):
 
 
 @router.post("/group-kps-into-sessions", response_model=APIResponse)
-async def group_kps_into_sessions(request: GroupKPsRequest):
+async def group_kps_into_sessions(
+    request: GroupKPsRequest,
+    user_id: int = Depends(get_current_user_id)
+):
     """
     Group knowledge points into teaching sessions using AI
     
@@ -143,8 +153,8 @@ async def group_kps_into_sessions(request: GroupKPsRequest):
         # Convert Pydantic models to dicts for service layer
         kps_as_dicts = [kp.dict() for kp in request.knowledge_points]
         
-        # Call OpenAI service with board parameter
-        success, parsed_result, error = await openai_service.group_kps_into_sessions(
+        # Call AI service with board parameter
+        success, parsed_result, error = await ai_service.group_kps_into_sessions(
             board=request.board,
             chapter=request.chapter,
             class_name=request.class_name,
@@ -195,7 +205,10 @@ async def group_kps_into_sessions(request: GroupKPsRequest):
 
 
 @router.post("/generate-session-summary", response_model=APIResponse)
-async def generate_session_summary(request: SessionSummaryRequest):
+async def generate_session_summary(
+    request: SessionSummaryRequest,
+    user_id: int = Depends(get_current_user_id)
+):
     """
     Generate a concise instructional overview for a teaching session
     
@@ -211,8 +224,8 @@ async def generate_session_summary(request: SessionSummaryRequest):
         # Convert Pydantic models to dicts for service layer
         kps_as_dicts = [kp.dict() for kp in request.knowledge_points]
         
-        # Call OpenAI service
-        success, parsed_result, error = await openai_service.generate_session_summary(
+        # Call AI service
+        success, parsed_result, error = await ai_service.generate_session_summary(
             board=request.board,
             chapter=request.chapter,
             class_name=request.class_name,

@@ -1,20 +1,24 @@
 import logging
 import uuid
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 
 from models import StudentQuestionRequest, StudentAnswerResponse, ConversationMessage, APIResponse
-from services.openai_service import OpenAIService
+from services.ai_service_factory import get_ai_service
+from utils.auth_dependencies import get_current_user_id
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["student"])
 
-# Initialize OpenAI service
-openai_service = OpenAIService()
+# Get AI service (switches between OpenAI and SarvamAI based on env variable)
+ai_service = get_ai_service()
 
 
 @router.post("/get-answers", response_model=APIResponse)
-async def get_student_answer(request: StudentQuestionRequest):
+async def get_student_answer(
+    request: StudentQuestionRequest,
+    user_id: int = Depends(get_current_user_id)
+):
     """
     Get detailed answers to student questions with conversation history
     
@@ -34,8 +38,8 @@ async def get_student_answer(request: StudentQuestionRequest):
                     "content": msg.content
                 })
         
-        # Get answer from OpenAI service
-        success, answer, error = await openai_service.get_student_answer(
+        # Get answer from AI service
+        success, answer, error = await ai_service.get_student_answer(
             question=request.question,
             conversation_history=history_dict,
             subject_name=request.subject_name,
@@ -43,7 +47,7 @@ async def get_student_answer(request: StudentQuestionRequest):
         )
         
         if not success:
-            logger.error(f"Failed to get answer from OpenAI: {error}")
+            logger.error(f"Failed to get answer from AI: {error}")
             return APIResponse(
                 success=False,
                 message="Failed to get answer from AI service",

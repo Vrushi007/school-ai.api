@@ -1,9 +1,10 @@
 # School AI API
 
-A Python web API application that integrates with OpenAI to generate educational content including lesson plans, detailed session content, and questions for multiple education boards and curricula.
+A Python web API application that integrates with AI providers (OpenAI, SarvamAI) to generate educational content including lesson plans, detailed session content, and questions for multiple education boards and curricula.
 
 ## Features
 
+- **Multi-AI Provider Support**: Switch between OpenAI and SarvamAI using environment variables
 - **Knowledge Point Generation**: Decompose curriculum content into atomic, teachable knowledge points aligned with curriculum standards, Bloom's Taxonomy, and IRT difficulty metrics
 - **AI-Powered Session Planning**: Intelligently group knowledge points into teaching sessions respecting prerequisite dependencies
 - **Session Summary Generation**: Generate teacher-focused instructional overviews and objectives for teaching sessions
@@ -12,7 +13,7 @@ A Python web API application that integrates with OpenAI to generate educational
 - **YouTube Integration**: Automatically fetch relevant educational videos based on session content
 - **Question Generation**: Create diverse question sets with various difficulty levels and types
 - **Student Q&A Chatbot**: Conversational AI assistant for student questions with context-aware responses
-- **JSON Parser Integration**: Handles malformed OpenAI responses gracefully
+- **JSON Parser Integration**: Handles malformed AI responses gracefully
 - **Multi-Board Support**: Works with various education boards (CBSE, ICSE, IB, State Boards, etc.)
 - **RESTful API**: Clean, well-documented API endpoints
 - **Error Handling**: Comprehensive error handling and logging
@@ -25,11 +26,34 @@ git clone <repository-url> && cd dummy-school-ai.api
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements-minimal.txt
 cp .env.example .env
-# Edit .env file to add your actual OpenAI API key
+# Edit .env file to add your AI provider API key
 python main.py
 ```
 
 Then visit: http://localhost:8000/docs
+
+## AI Provider Configuration
+
+The API supports multiple AI providers. Switch between them using the `AI_PROVIDER` environment variable:
+
+### Using OpenAI (Default)
+
+```bash
+AI_PROVIDER=openai
+OPENAI_API_KEY=your-openai-api-key
+OPENAI_MODEL_DEFAULT=gpt-4o-mini
+```
+
+### Using SarvamAI
+
+```bash
+AI_PROVIDER=sarvam
+SARVAM_API_KEY=your-sarvam-api-key
+SARVAM_API_BASE_URL=https://api.sarvam.ai/v1
+SARVAM_MODEL_DEFAULT=sarvam-1
+```
+
+For detailed configuration options, see [AI_PROVIDER_GUIDE.md](AI_PROVIDER_GUIDE.md).
 
 ## API Endpoints
 

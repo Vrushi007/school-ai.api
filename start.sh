@@ -23,13 +23,11 @@ fi
 echo "📦 Activating virtual environment..."
 source .venv/bin/activate
 
-echo "🔑 Loading environment variables..."
-export $(cat .env | xargs)
-
-echo "🌐 Starting FastAPI server..."
+echo "🌐 Starting FastAPI server with uvicorn..."
 echo "📍 API will be available at: http://localhost:8000"
 echo "📚 Documentation at: http://localhost:8000/docs"
 echo "🔄 Press Ctrl+C to stop the server"
 echo ""
 
-python main.py
+# Start the FastAPI application with uvicorn
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload

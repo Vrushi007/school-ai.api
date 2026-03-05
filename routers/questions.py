@@ -1,19 +1,23 @@
 import logging
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 
 from models import QuestionGenerationRequest, APIResponse
-from services.openai_service import OpenAIService
+from services.ai_service_factory import get_ai_service
+from utils.auth_dependencies import get_current_user_id
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["questions"])
 
-# Initialize OpenAI service
-openai_service = OpenAIService()
+# Get AI service (switches between OpenAI and SarvamAI based on env variable)
+ai_service = get_ai_service()
 
 
 @router.post("/generate-questions", response_model=APIResponse)
-async def generate_questions(request: QuestionGenerationRequest):
+async def generate_questions(
+    request: QuestionGenerationRequest,
+    user_id: int = Depends(get_current_user_id)
+):
     """
     Generate questions using OpenAI API
     
@@ -23,8 +27,8 @@ async def generate_questions(request: QuestionGenerationRequest):
     try:
         logger.info(f"Generating questions for {request.subject_name} - Class {request.class_name}")
         
-        # Call OpenAI service
-        success, parsed_result, error = await openai_service.generate_questions(
+        # Call AI service
+        success, parsed_result, error = await ai_service.generate_questions(
             class_name=request.class_name,
             subject_name=request.subject_name,
             chapters=request.chapters,
